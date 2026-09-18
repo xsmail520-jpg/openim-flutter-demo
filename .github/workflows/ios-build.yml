@@ -48,8 +48,8 @@ jobs:
       - name: Resolve Flutter dependencies
         run: flutter pub get
 
-      - name: Install CocoaPods dependencies
-        run: pod install --project-directory=ios --repo-update
+      - name: Update OpenIM CocoaPods dependency
+        run: pod update OpenIMSDKCore --project-directory=ios --repo-update
 
       # This validates the native iOS build without storing Apple signing keys
       # in GitHub. The resulting app is not installable until it is signed.
