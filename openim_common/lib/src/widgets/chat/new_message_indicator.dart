@@ -18,19 +18,22 @@ class NewMessageIndicator extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
         child: Container(
-          padding: EdgeInsets.symmetric(horizontal: 13.w, vertical: 7.h),
-          constraints: BoxConstraints(minHeight: 31.h),
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 8.h),
+          constraints: BoxConstraints(minHeight: Styles.controlHeight.h),
           decoration: BoxDecoration(
-            color: Styles.c_FFFFFF,
-            borderRadius: BorderRadius.circular(16.r),
-            border: Border.all(color: Styles.c_E8EAEF, width: 1),
+            color: Styles.surface,
+            borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
+            border: Border.all(
+              color: Styles.divider,
+              width: Styles.dividerWidth,
+            ),
             boxShadow: [
               BoxShadow(
-                offset: Offset(0, 6.h),
-                blurRadius: 16.r,
-                spreadRadius: 1.r,
-                color: Styles.c_8E9AB0_opacity16,
+                offset: Offset(0, 1.h),
+                blurRadius: 4.r,
+                color: Styles.ink.withValues(alpha: .06),
               ),
             ],
           ),

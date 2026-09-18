@@ -12,24 +12,73 @@ class SplashPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Styles.c_0089FF_opacity10, Styles.c_FFFFFF_opacity0],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Positioned(
-            bottom: 130.h,
-            child: ImageRes.splashLogo.toImage
-              ..width = 55.61.w
-              ..height = 78.91.h,
+    return Scaffold(
+      backgroundColor: Styles.background,
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 28.h),
+          child: Column(
+            children: [
+              Expanded(
+                child: Center(
+                  child: Container(
+                    width: 104.w,
+                    height: 128.h,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Styles.surface,
+                      border: Border.all(color: Styles.divider),
+                      borderRadius:
+                          BorderRadius.circular(Styles.radiusMedium.r),
+                    ),
+                    child: ImageRes.splashLogo.toImage
+                      ..width = 64.w
+                      ..height = 64.w,
+                  ),
+                ),
+              ),
+              Obx(() => Column(
+                    children: [
+                      if (logic.networkStatusText.isNotEmpty) ...[
+                        Text(
+                          logic.networkStatusText,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Styles.muted,
+                            fontSize: 13.sp,
+                          ),
+                        ),
+                        12.verticalSpace,
+                      ],
+                      if (logic.isCheckingNetwork)
+                        SizedBox(
+                          width: 18.w,
+                          height: 18.w,
+                          child:
+                              const CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      else if (logic.canRetryNetwork)
+                        OutlinedButton(
+                          onPressed: logic.retryNetwork,
+                          child: Text(StrRes.retryConnection),
+                        )
+                      else
+                        Container(
+                          width: 72.w,
+                          height: 3.h,
+                          color: Styles.primary,
+                        ),
+                    ],
+                  )),
+              8.verticalSpace,
+              Container(
+                width: 24.w,
+                height: 1.h,
+                color: Styles.divider,
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

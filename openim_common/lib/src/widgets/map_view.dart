@@ -34,7 +34,8 @@ class MapView extends StatelessWidget {
               ),
               children: [
                 TileLayer(
-                  urlTemplate: 'https://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',
+                  urlTemplate:
+                      'https://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',
                   userAgentPackageName: '',
                 ),
                 MarkerLayer(
@@ -70,8 +71,8 @@ class MapView extends StatelessWidget {
                   behavior: HitTestBehavior.translucent,
                   onTap: _openMapSheet,
                   child: Container(
-                    width: 35.w,
-                    height: 35.w,
+                    width: Styles.controlHeight,
+                    height: Styles.controlHeight,
                     decoration: const BoxDecoration(
                       color: Colors.green,
                       shape: BoxShape.circle,

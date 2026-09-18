@@ -30,6 +30,7 @@ class AccountSetupLogic extends GetxController {
         val?.allowAddFriend = userInfo.allowAddFriend;
         val?.allowBeep = userInfo.allowBeep;
         val?.allowVibration = userInfo.allowVibration;
+        val?.globalRecvMsgOpt = userInfo.globalRecvMsgOpt;
       });
     }
   }
@@ -46,6 +47,12 @@ class AccountSetupLogic extends GetxController {
         break;
       case 2:
         curLanguage.value = StrRes.english;
+        break;
+      case 3:
+        curLanguage.value = StrRes.traditionalChinese;
+        break;
+      case 4:
+        curLanguage.value = StrRes.vietnamese;
         break;
       default:
         curLanguage.value = StrRes.followSystem;

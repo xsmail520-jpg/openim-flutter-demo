@@ -16,11 +16,23 @@ class MineLogic extends GetxController {
 
   void viewMyInfo() => AppNavigator.startMyInfo();
 
+  void viewMyQrcode() => AppNavigator.startMyQrcode();
+
   void copyID() {
     IMUtils.copy(text: imLogic.userInfo.value.userID!);
   }
 
   void accountSetup() => AppNavigator.startAccountSetup();
+
+  void businessCenter() => AppNavigator.startBusinessCenter();
+
+  void security() => AppNavigator.startSecurity();
+
+  void privacySecurity() => AppNavigator.startPrivacySecurity();
+
+  void notificationSettings() => AppNavigator.startNotificationSettings();
+
+  void storageUsage() => AppNavigator.startStorageUsage();
 
   void aboutUs() => AppNavigator.startAboutUs();
 

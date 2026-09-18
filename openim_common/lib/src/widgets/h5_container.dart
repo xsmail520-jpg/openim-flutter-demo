@@ -38,7 +38,15 @@ class _H5ContainerState extends State<H5Container> {
       params = const PlatformWebViewControllerCreationParams();
     }
 
-    final WebViewController controller = WebViewController.fromPlatformCreationParams(params);
+    final WebViewController controller =
+        WebViewController.fromPlatformCreationParams(params);
+
+    final targetUri = Uri.tryParse(widget.url);
+    if (targetUri == null ||
+        (targetUri.scheme != 'http' && targetUri.scheme != 'https')) {
+      throw ArgumentError.value(
+          widget.url, 'url', 'Only HTTP(S) URLs are supported');
+    }
 
     controller
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
@@ -90,7 +98,7 @@ Page resource error:
           );
         },
       )
-      ..loadRequest(Uri.parse('https://openim.io'));
+      ..loadRequest(targetUri);
 
     if (!Platform.isMacOS) {
       controller.setBackgroundColor(const Color(0x80000000));
@@ -98,7 +106,8 @@ Page resource error:
 
     if (controller.platform is AndroidWebViewController) {
       AndroidWebViewController.enableDebugging(true);
-      (controller.platform as AndroidWebViewController).setMediaPlaybackRequiresUserGesture(false);
+      (controller.platform as AndroidWebViewController)
+          .setMediaPlaybackRequiresUserGesture(false);
     }
 
     _controller = controller;
@@ -120,7 +129,8 @@ Page resource error:
           progress < 1.0
               ? LinearProgressIndicator(
                   value: progress,
-                  color: Colors.blue,
+                  color: Styles.primary,
+                  backgroundColor: Styles.primaryContainer,
                 )
               : const SizedBox(),
         ],

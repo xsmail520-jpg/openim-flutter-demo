@@ -23,7 +23,8 @@ mixin UpgradeManger {
   }
 
   void ignoreUpdate() {
-    DataSp.putIgnoreVersion(upgradeInfoV2!.buildVersion! + upgradeInfoV2!.buildVersionNo!);
+    DataSp.putIgnoreVersion(
+        upgradeInfoV2!.buildVersion! + upgradeInfoV2!.buildVersionNo!);
     Get.back();
   }
 
@@ -88,14 +89,17 @@ mixin UpgradeManger {
   }
 
   bool get canUpdate =>
-      packageInfo!.version + packageInfo!.buildNumber != upgradeInfoV2!.buildVersion! + upgradeInfoV2!.buildVersionNo!;
+      packageInfo!.version + packageInfo!.buildNumber !=
+      upgradeInfoV2!.buildVersion! + upgradeInfoV2!.buildVersionNo!;
 }
 
 class NotificationService {
-  static final NotificationService _notificationService = NotificationService._internal();
-  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
+  static final NotificationService _notificationService =
+      NotificationService._internal();
+  final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
   final AndroidInitializationSettings _androidInitializationSettings =
-      const AndroidInitializationSettings('@mipmap/ic_launcher');
+      const AndroidInitializationSettings('@drawable/ic_stat_notification');
 
   factory NotificationService() {
     return _notificationService;
@@ -108,24 +112,29 @@ class NotificationService {
   }
 
   void init() async {
-    final InitializationSettings initializationSettings = InitializationSettings(
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
       android: _androidInitializationSettings,
     );
     await _flutterLocalNotificationsPlugin.initialize(initializationSettings);
   }
 
   Future createNotification(int count, int i, int id, String status) async {
-    var androidPlatformChannelSpecifics = AndroidNotificationDetails('progress channel', 'progress channel',
+    var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+        'progress channel', 'progress channel',
         channelDescription: 'progress channel description',
         channelShowBadge: false,
         importance: Importance.max,
         priority: Priority.high,
+        icon: 'ic_stat_notification',
         onlyAlertOnce: true,
         showProgress: true,
         maxProgress: count,
         progress: i);
-    var platformChannelSpecifics = NotificationDetails(android: androidPlatformChannelSpecifics);
-    await _flutterLocalNotificationsPlugin.show(id, status, '$i%', platformChannelSpecifics, payload: 'item x');
+    var platformChannelSpecifics =
+        NotificationDetails(android: androidPlatformChannelSpecifics);
+    await _flutterLocalNotificationsPlugin
+        .show(id, status, '$i%', platformChannelSpecifics, payload: 'item x');
 
     return;
   }

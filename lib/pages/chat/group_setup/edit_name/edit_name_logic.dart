@@ -7,6 +7,7 @@ import 'package:openim_common/openim_common.dart';
 enum EditNameType {
   myGroupMemberNickname,
   groupNickname,
+  groupAnnouncement,
 }
 
 class EditGroupNameLogic extends GetxController {
@@ -20,7 +21,11 @@ class EditGroupNameLogic extends GetxController {
     type = Get.arguments['type'];
     faceUrl = Get.arguments['faceUrl'];
     inputCtrl = TextEditingController(
-      text: type == EditNameType.groupNickname ? groupSetupLogic.groupInfo.value.groupName : groupSetupLogic.myGroupMembersInfo.value.nickname,
+      text: type == EditNameType.groupNickname
+          ? groupSetupLogic.groupInfo.value.groupName
+          : type == EditNameType.groupAnnouncement
+              ? groupSetupLogic.groupInfo.value.notification
+              : groupSetupLogic.myGroupMembersInfo.value.nickname,
     );
     super.onInit();
   }
@@ -31,16 +36,27 @@ class EditGroupNameLogic extends GetxController {
     super.onClose();
   }
 
-  String? get title => type == EditNameType.myGroupMemberNickname ? StrRes.myGroupMemberNickname : StrRes.groupName;
+  String? get title => type == EditNameType.myGroupMemberNickname
+      ? StrRes.myGroupMemberNickname
+      : type == EditNameType.groupAnnouncement
+          ? '群公告'
+          : StrRes.groupName;
 
   void save() async {
-    if (inputCtrl.text.trim().length > 16) {
+    if (type != EditNameType.groupAnnouncement &&
+        inputCtrl.text.trim().length > 16) {
       return IMViews.showToast(StrRes.createGroupTips);
     }
     await LoadingView.singleton.wrap(asyncFunction: () async {
       if (type == EditNameType.groupNickname) {
-        await OpenIM.iMManager.groupManager
-            .setGroupInfo(GroupInfo(groupID: groupSetupLogic.groupInfo.value.groupID, groupName: inputCtrl.text.trim()));
+        await OpenIM.iMManager.groupManager.setGroupInfo(GroupInfo(
+            groupID: groupSetupLogic.groupInfo.value.groupID,
+            groupName: inputCtrl.text.trim()));
+      } else if (type == EditNameType.groupAnnouncement) {
+        await OpenIM.iMManager.groupManager.setGroupInfo(GroupInfo(
+          groupID: groupSetupLogic.groupInfo.value.groupID,
+          notification: inputCtrl.text.trim(),
+        ));
       } else if (type == EditNameType.myGroupMemberNickname) {
         await OpenIM.iMManager.groupManager.setGroupMemberNickname(
           groupID: groupSetupLogic.groupInfo.value.groupID,

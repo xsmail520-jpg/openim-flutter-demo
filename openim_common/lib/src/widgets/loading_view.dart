@@ -42,9 +42,25 @@ class LoadingView {
     _overlayEntry = OverlayEntry(
       builder: (BuildContext context) => Container(
         width: MediaQuery.of(context).size.width,
-        color: Colors.transparent,
+        color: Styles.ink.withValues(alpha: .04),
         child: Center(
-          child: SpinKitCircle(color: Styles.c_0089FF),
+          child: Container(
+            width: 64,
+            height: 64,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: Styles.surface,
+              border: Border.all(
+                color: Styles.divider,
+                width: Styles.dividerWidth,
+              ),
+              borderRadius: BorderRadius.circular(Styles.radiusMedium),
+            ),
+            child: const SpinKitCircle(
+              color: Styles.primary,
+              size: 36,
+            ),
+          ),
         ),
       ),
     );
@@ -67,30 +83,37 @@ class LoadingView {
         onTap: dismiss,
         child: Container(
           width: MediaQuery.of(context).size.width,
-          color: const Color.fromARGB(0, 37, 33, 33),
+          color: Styles.ink.withValues(alpha: .12),
           child: Center(
             child: Container(
               alignment: Alignment.center,
-              width: 80,
-              height: 80,
+              width: 88,
+              height: 88,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: Styles.c_0C1C33,
+                borderRadius: BorderRadius.circular(Styles.radiusMedium),
+                color: Styles.ink,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const CupertinoActivityIndicator(
-                    color: Colors.white,
+                    color: Styles.surface,
                     radius: 20,
                   ),
+                  const SizedBox(height: 8),
                   StreamBuilder(
                       stream: stream,
-                      builder: (BuildContext context, AsyncSnapshot<double> snapshot) {
+                      builder: (BuildContext context,
+                          AsyncSnapshot<double> snapshot) {
                         if (!snapshot.hasData) return Container();
                         final progress = snapshot.data ?? 0.0;
-                        return Text('${(progress * 100).toStringAsFixed(1)}%',
-                            style: const TextStyle(color: Colors.white));
+                        return Text(
+                          '${(progress * 100).toStringAsFixed(1)}%',
+                          style: const TextStyle(
+                            color: Styles.surface,
+                            fontSize: 12,
+                          ),
+                        );
                       }),
                 ],
               ),

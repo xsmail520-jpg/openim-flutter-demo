@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 import 'dart:io';
 
 import 'package:collection/collection.dart';
@@ -24,6 +23,7 @@ import '../../core/im_callback.dart';
 import '../../routes/app_navigator.dart';
 import '../contacts/select_contacts/select_contacts_logic.dart';
 import '../conversation/conversation_logic.dart';
+import '../favorites/favorites_view.dart';
 import 'group_setup/group_member_list/group_member_list_logic.dart';
 
 class ChatLogic extends SuperController {
@@ -46,6 +46,7 @@ class ChatLogic extends SuperController {
   final nickname = ''.obs;
   final faceUrl = ''.obs;
   Timer? _debounce;
+  Timer? _draftDebounce;
   final messageList = <Message>[].obs;
   final tempMessages = <Message>[];
   final scaleFactor = Config.textScaleFactor.obs;
@@ -59,11 +60,15 @@ class ChatLogic extends SuperController {
 
   final isInGroup = true.obs;
   final memberCount = 0.obs;
+  final groupStatus = 0.obs;
   final privateMessageList = <Message>[];
   final isInBlacklist = false.obs;
 
   final scrollingCacheMessageList = <Message>[];
   final announcement = ''.obs;
+  final isVoiceRecording = false.obs;
+  final voiceRecordingSeconds = 0.obs;
+  VoiceRecord? _voiceRecord;
   late StreamSubscription conversationSub;
   late StreamSubscription memberAddSub;
   late StreamSubscription memberDelSub;
@@ -103,12 +108,19 @@ class ChatLogic extends SuperController {
 
   bool get isGroupChat => null != groupID && groupID!.trim().isNotEmpty;
 
-  String get memberStr => isSingleChat ? "" : "($memberCount)";
+  String get memberStr =>
+      isSingleChat || !isAdminOrOwner ? "" : "($memberCount)";
 
-  String? get senderName => isSingleChat ? OpenIM.iMManager.userInfo.nickname : groupMembersInfo?.nickname;
+  String? get senderName => isSingleChat
+      ? OpenIM.iMManager.userInfo.nickname
+      : groupMembersInfo?.nickname;
 
   bool get isAdminOrOwner =>
-      groupMemberRoleLevel.value == GroupRoleLevel.admin || groupMemberRoleLevel.value == GroupRoleLevel.owner;
+      groupMemberRoleLevel.value == GroupRoleLevel.admin ||
+      groupMemberRoleLevel.value == GroupRoleLevel.owner;
+
+  bool get isGroupLockedForMe =>
+      isGroupChat && groupStatus.value == 3 && !isAdminOrOwner;
 
   final directionalUsers = <GroupMembersInfo>[].obs;
 
@@ -119,8 +131,10 @@ class ChatLogic extends SuperController {
 
     var isCurSingleChat = message.isSingleChat &&
         isSingleChat &&
-        (senderId == userID || senderId == OpenIM.iMManager.userID && receiverId == userID);
-    var isCurGroupChat = message.isGroupChat && isGroupChat && groupID == groupId;
+        (senderId == userID ||
+            senderId == OpenIM.iMManager.userID && receiverId == userID);
+    var isCurGroupChat =
+        message.isGroupChat && isGroupChat && groupID == groupId;
     return isCurSingleChat || isCurGroupChat;
   }
 
@@ -131,11 +145,14 @@ class ChatLogic extends SuperController {
   }
 
   Future<List<Message>> searchMediaMessage() async {
-    final messageList = await OpenIM.iMManager.messageManager.searchLocalMessages(
-        conversationID: conversationInfo.conversationID,
-        messageTypeList: [MessageType.picture, MessageType.video],
-        count: 500);
-    return messageList.searchResultItems?.first.messageList?.reversed.toList() ?? [];
+    final messageList = await OpenIM.iMManager.messageManager
+        .searchLocalMessages(
+            conversationID: conversationInfo.conversationID,
+            messageTypeList: [MessageType.picture, MessageType.video],
+            count: 500);
+    return messageList.searchResultItems?.first.messageList?.reversed
+            .toList() ??
+        [];
   }
 
   @override
@@ -156,11 +173,21 @@ class ChatLogic extends SuperController {
     searchMessage = arguments['searchMessage'];
     nickname.value = conversationInfo.showName ?? '';
     faceUrl.value = conversationInfo.faceURL ?? '';
+    final draftText = arguments['draftText'];
+    if (draftText is String && draftText.isNotEmpty) {
+      try {
+        final draft = jsonDecode(draftText);
+        inputCtrl.text = draft is Map ? '${draft['text'] ?? ''}' : draftText;
+      } catch (_) {
+        inputCtrl.text = draftText;
+      }
+    }
     _initChatConfig();
     _setSdkSyncDataListener();
 
     conversationSub = imLogic.conversationChangedSubject.listen((value) {
-      final obj = value.firstWhereOrNull((e) => e.conversationID == conversationInfo.conversationID);
+      final obj = value.firstWhereOrNull(
+          (e) => e.conversationID == conversationInfo.conversationID);
 
       if (obj != null) {
         conversationInfo = obj;
@@ -171,7 +198,8 @@ class ChatLogic extends SuperController {
       if (isCurrentChat(message)) {
         if (message.contentType == MessageType.typing) {
         } else {
-          if (!messageList.contains(message) && !scrollingCacheMessageList.contains(message)) {
+          if (!messageList.contains(message) &&
+              !scrollingCacheMessageList.contains(message)) {
             _isReceivedMessageWhenSyncing = true;
             if (scrollController.offset != 0) {
               scrollingCacheMessageList.add(message);
@@ -198,6 +226,13 @@ class ChatLogic extends SuperController {
         }
         messageList.refresh();
       } catch (e) {}
+    };
+
+    imLogic.onRecvMessageRevoked = (RevokedInfo info) {
+      if (info.clientMsgID == null) return;
+      messageList
+          .removeWhere((message) => message.clientMsgID == info.clientMsgID);
+      messageList.refresh();
     };
 
     joinedGroupAddedSub = imLogic.joinedGroupAddedSubject.listen((event) {
@@ -237,12 +272,14 @@ class ChatLogic extends SuperController {
         }
         _putMemberInfo([info]);
 
-        final index = ownerAndAdmin.indexWhere((element) => element.userID == info.userID);
+        final index = ownerAndAdmin
+            .indexWhere((element) => element.userID == info.userID);
         if (info.roleLevel == GroupRoleLevel.member) {
           if (index > -1) {
             ownerAndAdmin.removeAt(index);
           }
-        } else if (info.roleLevel == GroupRoleLevel.admin || info.roleLevel == GroupRoleLevel.owner) {
+        } else if (info.roleLevel == GroupRoleLevel.admin ||
+            info.roleLevel == GroupRoleLevel.owner) {
           if (index == -1) {
             ownerAndAdmin.add(info);
           } else {
@@ -275,6 +312,8 @@ class ChatLogic extends SuperController {
         nickname.value = value.groupName ?? '';
         faceUrl.value = value.faceURL ?? '';
         memberCount.value = value.memberCount ?? 0;
+        announcement.value = value.notification ?? '';
+        groupStatus.value = value.status ?? 0;
       }
     });
 
@@ -312,6 +351,9 @@ class ChatLogic extends SuperController {
       _debounce = Timer(1.seconds, () {
         sendTypingMsg(focus: false);
       });
+
+      _draftDebounce?.cancel();
+      _draftDebounce = Timer(const Duration(milliseconds: 350), _saveDraft);
     });
 
     focusNode.addListener(() {
@@ -350,10 +392,19 @@ class ChatLogic extends SuperController {
     _sendMessage(message);
   }
 
+  void _saveDraft() {
+    final text = inputCtrl.text;
+    OpenIM.iMManager.conversationManager.setConversationDraft(
+      conversationID: conversationInfo.conversationID,
+      draftText: text.isEmpty ? '' : jsonEncode({'text': text}),
+    );
+  }
+
   Future sendPicture({required String path, bool sendNow = true}) async {
     final file = await IMUtils.compressImageAndGetFile(File(path));
 
-    var message = await OpenIM.iMManager.messageManager.createImageMessageFromFullPath(
+    var message =
+        await OpenIM.iMManager.messageManager.createImageMessageFromFullPath(
       imagePath: file!.path,
     );
 
@@ -363,6 +414,48 @@ class ChatLogic extends SuperController {
       messageList.add(message);
       tempMessages.add(message);
     }
+  }
+
+  Future<void> startVoiceRecording() async {
+    if (isVoiceRecording.value) return;
+    voiceRecordingSeconds.value = 0;
+    _voiceRecord = VoiceRecord(
+      maxRecordSec: 60,
+      onDuration: (duration) => voiceRecordingSeconds.value = duration,
+      onFinished: (duration, path) => _sendVoice(path, duration),
+      onInterrupt: (duration, path) => _sendVoice(path, duration),
+    );
+    final started = await _voiceRecord!.start();
+    if (!started) {
+      _voiceRecord = null;
+      IMViews.showToast('未获得麦克风权限，无法开始录音');
+      return;
+    }
+    isVoiceRecording.value = true;
+  }
+
+  Future<void> finishVoiceRecording() async {
+    if (!isVoiceRecording.value) return;
+    await _voiceRecord?.stop();
+    isVoiceRecording.value = false;
+  }
+
+  Future<void> cancelVoiceRecording() async {
+    await _voiceRecord?.stop(isInterrupt: true);
+    isVoiceRecording.value = false;
+    voiceRecordingSeconds.value = 0;
+  }
+
+  Future<void> _sendVoice(String path, int duration) async {
+    isVoiceRecording.value = false;
+    if (duration < 1) {
+      IMViews.showToast('录音时间太短');
+      return;
+    }
+    final message = await OpenIM.iMManager.messageManager
+        .createSoundMessageFromFullPath(soundPath: path, duration: duration);
+    await _sendMessage(message);
+    if (Get.isBottomSheetOpen == true) Get.back();
   }
 
   sendForwardRemarkMsg(
@@ -389,8 +482,8 @@ class ChatLogic extends SuperController {
 
   void sendTypingMsg({bool focus = false}) async {
     if (isSingleChat) {
-      OpenIM.iMManager.conversationManager
-          .changeInputStates(conversationID: conversationInfo.conversationID, focus: focus);
+      OpenIM.iMManager.conversationManager.changeInputStates(
+          conversationID: conversationInfo.conversationID, focus: focus);
     }
   }
 
@@ -426,7 +519,7 @@ class ChatLogic extends SuperController {
     String? groupId,
     bool addToUI = true,
   }) {
-    log('send : ${json.encode(message)}');
+    Logger.print('send message type: ${message.contentType}');
     userId = IMUtils.emptyStrToNull(userId);
     groupId = IMUtils.emptyStrToNull(groupId);
     if (null == userId && null == groupId ||
@@ -443,16 +536,25 @@ class ChatLogic extends SuperController {
 
     final recvUserID = useOuterValue ? userId : userID;
     message.recvID = recvUserID;
+    final offlinePushInfo = Config.offlinePushInfo;
+    offlinePushInfo.ex = jsonEncode({
+      'conversationID': conversationInfo.conversationID,
+      'sourceID': useOuterValue ? (groupId ?? userId) : (groupID ?? userID),
+      'sessionType':
+          isGroupChat ? ConversationType.group : ConversationType.single,
+      'clientMsgID': message.clientMsgID,
+    });
 
     return OpenIM.iMManager.messageManager
         .sendMessage(
           message: message,
           userID: recvUserID,
           groupID: useOuterValue ? groupId : groupID,
-          offlinePushInfo: Config.offlinePushInfo,
+          offlinePushInfo: offlinePushInfo,
         )
         .then((value) => _sendSucceeded(message, value))
-        .catchError((error, _) => _senFailed(message, groupId, userId, error, _))
+        .catchError(
+            (error, _) => _senFailed(message, groupId, userId, error, _))
         .whenComplete(() => _completed());
   }
 
@@ -465,8 +567,10 @@ class ChatLogic extends SuperController {
     ));
   }
 
-  void _senFailed(Message message, String? groupId, String? userId, error, stack) async {
-    Logger.print('message send failed userID: $userId groupId:$groupId, catch error :$error  $stack');
+  void _senFailed(
+      Message message, String? groupId, String? userId, error, stack) async {
+    Logger.print(
+        'message send failed userID: $userId groupId:$groupId, catch error :$error  $stack');
     message.status = MessageStatus.failed;
     sendStatusSub.addSafely(MsgStreamEv<bool>(
       id: message.clientMsgID!,
@@ -482,7 +586,8 @@ class ChatLogic extends SuperController {
           customType = CustomMessageType.deletedByFriend;
         }
         if (null != customType) {
-          final hintMessage = (await OpenIM.iMManager.messageManager.createFailedHintMessage(type: customType))
+          final hintMessage = (await OpenIM.iMManager.messageManager
+              .createFailedHintMessage(type: customType))
             ..status = 2
             ..isRead = true;
           if (userId != null) {
@@ -499,10 +604,15 @@ class ChatLogic extends SuperController {
           );
         }
       } else {
-        if ((code == SDKErrorCode.userIsNotInGroup || code == SDKErrorCode.groupDisbanded) && null == groupId) {
+        if ((code == SDKErrorCode.userIsNotInGroup ||
+                code == SDKErrorCode.groupDisbanded) &&
+            null == groupId) {
           final status = groupInfo?.status;
-          final hintMessage = (await OpenIM.iMManager.messageManager.createFailedHintMessage(
-              type: status == 2 ? CustomMessageType.groupDisbanded : CustomMessageType.removedFromGroup))
+          final hintMessage = (await OpenIM.iMManager.messageManager
+              .createFailedHintMessage(
+                  type: status == 2
+                      ? CustomMessageType.groupDisbanded
+                      : CustomMessageType.removedFromGroup))
             ..status = 2
             ..isRead = true;
           messageList.add(hintMessage);
@@ -527,11 +637,13 @@ class ChatLogic extends SuperController {
   }
 
   void markMessageAsRead(Message message, bool visible) async {
-    Logger.print('markMessageAsRead: ${message.textElem?.content}, $visible');
-    if (visible && message.contentType! < 1000 && message.contentType! != MessageType.voice) {
+    Logger.print('mark message as read: visible=$visible');
+    if (visible &&
+        message.contentType! < 1000 &&
+        message.contentType! != MessageType.voice) {
       var data = IMUtils.parseCustomMessage(message);
       if (null != data && data['viewType'] == CustomMessageType.call) {
-        Logger.print('markMessageAsRead: call message $data');
+        Logger.print('skip read receipt for call message');
         return;
       }
       _markMessageAsRead(message);
@@ -541,11 +653,14 @@ class ChatLogic extends SuperController {
   _markMessageAsRead(Message message) async {
     if (!message.isRead! && message.sendID != OpenIM.iMManager.userID) {
       try {
-        Logger.print('mark conversation message as read：${message.clientMsgID!} ${message.isRead}');
+        Logger.print(
+            'mark conversation message as read：${message.clientMsgID!} ${message.isRead}');
         await OpenIM.iMManager.conversationManager
-            .markConversationMessageAsRead(conversationID: conversationInfo.conversationID);
+            .markConversationMessageAsRead(
+                conversationID: conversationInfo.conversationID);
       } catch (e) {
-        Logger.print('failed to send group message read receipt： ${message.clientMsgID} ${message.isRead}');
+        Logger.print(
+            'failed to send group message read receipt： ${message.clientMsgID} ${message.isRead}');
       } finally {
         message.isRead = true;
         message.hasReadTime = _timestamp;
@@ -556,8 +671,8 @@ class ChatLogic extends SuperController {
 
   _clearUnreadCount() {
     if (conversationInfo.unreadCount > 0) {
-      OpenIM.iMManager.conversationManager
-          .markConversationMessageAsRead(conversationID: conversationInfo.conversationID);
+      OpenIM.iMManager.conversationManager.markConversationMessageAsRead(
+          conversationID: conversationInfo.conversationID);
     }
   }
 
@@ -582,7 +697,8 @@ class ChatLogic extends SuperController {
               }
 
               if (entity.videoDuration > const Duration(seconds: 5 * 60)) {
-                IMViews.showToast(sprintf(StrRes.selectVideoLimit, [5]) + StrRes.minute);
+                IMViews.showToast(
+                    sprintf(StrRes.selectVideoLimit, [5]) + StrRes.minute);
                 return false;
               }
               return true;
@@ -608,14 +724,20 @@ class ChatLogic extends SuperController {
 
   Future _handleAssets(AssetEntity? asset, {bool sendNow = true}) async {
     if (null != asset) {
-      Logger.print('--------assets type-----${asset.type} create time: ${asset.createDateTime}');
+      Logger.print(
+          '--------assets type-----${asset.type} create time: ${asset.createDateTime}');
       final originalFile = await asset.file;
       final originalPath = originalFile!.path;
-      var path = originalPath.toLowerCase().endsWith('.gif') ? originalPath : originalFile.path;
+      var path = originalPath.toLowerCase().endsWith('.gif')
+          ? originalPath
+          : originalFile.path;
       Logger.print('--------assets path-----$path');
       switch (asset.type) {
         case AssetType.image:
           await sendPicture(path: path, sendNow: sendNow);
+          break;
+        case AssetType.video:
+          await _sendVideoAsset(asset, sendNow: sendNow);
           break;
         default:
           break;
@@ -624,6 +746,84 @@ class ChatLogic extends SuperController {
         originalFile.deleteSync();
       }
     }
+  }
+
+  Future<void> onTapCamera() async {
+    final entity = await CameraPicker.pickFromCamera(
+      Get.context!,
+      locale: Get.locale,
+      pickerConfig: const CameraPickerConfig(
+        enableAudio: true,
+        enableRecording: true,
+        maximumRecordingDuration: Duration(seconds: 60),
+      ),
+    );
+    if (entity != null) {
+      await _handleAssets(entity);
+    }
+  }
+
+  Future<void> _sendVideoAsset(
+    AssetEntity asset, {
+    bool sendNow = true,
+  }) async {
+    final file = await asset.file;
+    if (file == null) {
+      IMViews.showToast(StrRes.videoLoadFailed);
+      return;
+    }
+    final thumbnail = await asset.thumbnailData;
+    if (thumbnail == null || thumbnail.isEmpty) {
+      IMViews.showToast(StrRes.videoLoadFailed);
+      return;
+    }
+    final snapshotPath = await IMUtils.createTempFile(
+      dir: 'video_snapshot',
+      name: '${DateTime.now().millisecondsSinceEpoch}.jpg',
+    );
+    await File(snapshotPath).writeAsBytes(thumbnail, flush: true);
+    final videoType = await asset.mimeTypeAsync ?? 'video/mp4';
+    final duration = asset.videoDuration.inSeconds.clamp(1, 60).toInt();
+    final message =
+        await OpenIM.iMManager.messageManager.createVideoMessageFromFullPath(
+      videoPath: file.path,
+      videoType: videoType,
+      duration: duration,
+      snapshotPath: snapshotPath,
+    );
+    if (sendNow) {
+      await _sendMessage(message);
+    } else {
+      messageList.add(message);
+      tempMessages.add(message);
+    }
+  }
+
+  void openFavorites() => Get.to(() => const FavoritesPage());
+
+  Future<void> favoriteMessage(Message message) async {
+    final content = _favoriteContent(message);
+    final items = DataSp.getFavoriteItems();
+    items.removeWhere((item) => item['id'] == message.clientMsgID);
+    items.insert(0, {
+      'id': message.clientMsgID,
+      'sender': message.senderNickname ?? '',
+      'content': content,
+      'type': message.contentType,
+      'createdAt': DateTime.now().toIso8601String(),
+    });
+    await DataSp.putFavoriteItems(items.take(200).toList());
+    IMViews.showToast(StrRes.favoriteAdded);
+  }
+
+  String _favoriteContent(Message message) {
+    final text = message.textElem?.content ?? message.atTextElem?.text;
+    if (text != null && text.trim().isNotEmpty) return text.trim();
+    try {
+      final parsed = IMUtils.parseMsg(message, isConversation: false);
+      if (parsed.trim().isNotEmpty) return parsed.trim();
+    } catch (_) {}
+    return StrRes.unsupportedMessage;
   }
 
   void onTapDirectionalMessage() async {
@@ -666,7 +866,7 @@ class ChatLogic extends SuperController {
   }
 
   void parseClickEvent(Message msg) async {
-    log('parseClickEvent:${jsonEncode(msg)}');
+    Logger.print('parse message click type: ${msg.contentType}');
     if (msg.contentType == MessageType.custom) {
       var data = msg.customElem!.data;
       var map = json.decode(data!);
@@ -737,7 +937,8 @@ class ChatLogic extends SuperController {
     }
   }
 
-  Message indexOfMessage(int index, {bool calculate = true}) => IMUtils.calChatTimeInterval(
+  Message indexOfMessage(int index, {bool calculate = true}) =>
+      IMUtils.calChatTimeInterval(
         messageList,
         calculate: calculate,
       ).reversed.elementAt(index);
@@ -748,6 +949,8 @@ class ChatLogic extends SuperController {
   void onClose() {
     sendTypingMsg();
     _clearUnreadCount();
+    _draftDebounce?.cancel();
+    _saveDraft();
     inputCtrl.dispose();
     focusNode.dispose();
     forceCloseToolbox.close();
@@ -765,6 +968,7 @@ class ChatLogic extends SuperController {
     connectionSub.cancel();
 
     _debounce?.cancel();
+    _voiceRecord?.stop(isInterrupt: true);
     super.onClose();
   }
 
@@ -823,7 +1027,8 @@ class ChatLogic extends SuperController {
       userIDList: [OpenIM.iMManager.userID],
     );
     groupMembersInfo = list.firstOrNull;
-    groupMemberRoleLevel.value = groupMembersInfo?.roleLevel ?? GroupRoleLevel.member;
+    groupMemberRoleLevel.value =
+        groupMembersInfo?.roleLevel ?? GroupRoleLevel.member;
     if (null != groupMembersInfo) {
       memberUpdateInfoMap[OpenIM.iMManager.userID] = groupMembersInfo!;
     }
@@ -833,7 +1038,8 @@ class ChatLogic extends SuperController {
 
   Future _queryOwnerAndAdmin() async {
     if (isGroupChat) {
-      ownerAndAdmin = await OpenIM.iMManager.groupManager.getGroupMemberList(groupID: groupID!, filter: 5, count: 20);
+      ownerAndAdmin = await OpenIM.iMManager.groupManager
+          .getGroupMemberList(groupID: groupID!, filter: 5, count: 20);
     }
     return;
   }
@@ -861,6 +1067,8 @@ class ChatLogic extends SuperController {
     );
     groupInfo = list.firstOrNull;
     groupOwnerID = groupInfo?.ownerUserID;
+    announcement.value = groupInfo?.notification ?? '';
+    groupStatus.value = groupInfo?.status ?? 0;
     if (null != groupInfo?.memberCount) {
       memberCount.value = groupInfo!.memberCount!;
     }
@@ -869,14 +1077,108 @@ class ChatLogic extends SuperController {
 
   bool get havePermissionMute =>
       isGroupChat &&
-      (groupInfo?.ownerUserID == OpenIM.iMManager.userID /*||
+      (groupInfo?.ownerUserID ==
+          OpenIM.iMManager
+              .userID /*||
           groupMembersInfo?.roleLevel == 2*/
       );
 
   bool isNotificationType(Message message) => message.contentType! >= 1000;
 
   Map<String, String> getAtMapping(Message message) {
-    return {};
+    return IMUtils.getAtMapping(message, {});
+  }
+
+  bool isMentionForMe(Message message) {
+    final at = message.atTextElem;
+    if (message.contentType != MessageType.atText || at == null) return false;
+    final currentUserID = OpenIM.iMManager.userID;
+    return at.isAtSelf == true ||
+        at.atUserList?.contains(currentUserID) == true ||
+        at.atUserList
+                ?.contains(OpenIM.iMManager.conversationManager.atAllTag) ==
+            true;
+  }
+
+  Future<void> jumpToMention() async {
+    final index = messageList.lastIndexWhere(isMentionForMe);
+    if (index < 0) {
+      IMViews.showToast('当前会话没有找到提及我的消息');
+      return;
+    }
+    final displayIndex = messageList.length - index - 1;
+    if (scrollController.hasClients) {
+      final target = (displayIndex * 92.0)
+          .clamp(0.0, scrollController.position.maxScrollExtent);
+      await scrollController.animateTo(
+        target,
+        duration: const Duration(milliseconds: 260),
+        curve: Curves.easeOut,
+      );
+    }
+  }
+
+  bool canRevoke(Message message) {
+    if (message.sendID != OpenIM.iMManager.userID || message.sendTime == null)
+      return false;
+    return DateTime.now().millisecondsSinceEpoch - message.sendTime! <=
+        2 * 60 * 1000;
+  }
+
+  Future<void> showMessageActions(Message message) async {
+    final action = await Get.bottomSheet<String>(
+      SafeArea(
+        child: Material(
+          color: Styles.surface,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if ((message.textElem?.content ?? message.atTextElem?.text ?? '')
+                  .isNotEmpty)
+                ListTile(
+                  leading: const Icon(Icons.copy_outlined),
+                  title: const Text('复制文字'),
+                  onTap: () => Get.back(result: 'copy'),
+                ),
+              if (canRevoke(message))
+                ListTile(
+                  leading: const Icon(Icons.undo_outlined),
+                  title: const Text('撤回消息（2分钟内）'),
+                  onTap: () => Get.back(result: 'revoke'),
+                ),
+              ListTile(
+                leading: const Icon(Icons.star_border_rounded),
+                title: Text(StrRes.favorite),
+                onTap: () => Get.back(result: 'favorite'),
+              ),
+              ListTile(
+                leading: const Icon(Icons.close),
+                title: const Text('取消'),
+                onTap: () => Get.back(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (action == 'copy') {
+      final text = message.textElem?.content ?? message.atTextElem?.text ?? '';
+      IMUtils.copy(text: text);
+    } else if (action == 'revoke') {
+      final confirmed =
+          await Get.dialog<bool>(CustomDialog(title: '确认撤回这条消息？'));
+      if (confirmed != true || message.clientMsgID == null) return;
+      try {
+        await OpenIM.iMManager.messageManager.revokeMessage(
+          conversationID: conversationInfo.conversationID,
+          clientMsgID: message.clientMsgID!,
+        );
+      } catch (e) {
+        IMViews.showToast('撤回失败：$e');
+      }
+    } else if (action == 'favorite') {
+      await favoriteMessage(message);
+    }
   }
 
   void _checkInBlacklist() async {
@@ -953,12 +1255,14 @@ class ChatLogic extends SuperController {
       var data = message.customElem!.data;
       var map = json.decode(data!);
       var customType = map['customType'];
-      return customType == CustomMessageType.deletedByFriend || customType == CustomMessageType.blockedByFriend;
+      return customType == CustomMessageType.deletedByFriend ||
+          customType == CustomMessageType.blockedByFriend;
     }
     return false;
   }
 
-  void sendFriendVerification() => AppNavigator.startSendVerificationApplication(userID: userID);
+  void sendFriendVerification() =>
+      AppNavigator.startSendVerificationApplication(userID: userID);
 
   void _setSdkSyncDataListener() {
     connectionSub = imLogic.imSdkStatusPublishSubject.listen((value) {
@@ -1031,7 +1335,8 @@ class ChatLogic extends SuperController {
   }
 
   Future<void> _loadHistoryForSyncEnd() async {
-    final result = await OpenIM.iMManager.messageManager.getAdvancedHistoryMessageList(
+    final result =
+        await OpenIM.iMManager.messageManager.getAdvancedHistoryMessageList(
       conversationID: conversationInfo.conversationID,
       count: messageList.length < _pageSize ? _pageSize : messageList.length,
       startMsg: null,

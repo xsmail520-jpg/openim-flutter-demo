@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:common_utils/common_utils.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -19,36 +17,55 @@ class UserProfilePanelPage extends StatelessWidget {
     return Obx(
       () => Scaffold(
         appBar: TitleBar.back(
+          showUnderline: true,
           right: logic.isFriendship
-              ? (ImageRes.moreBlack.toImage
-                ..width = 24.w
-                ..height = 24.h
-                ..onTap = logic.friendSetup)
+              ? GestureDetector(
+                  behavior: HitTestBehavior.translucent,
+                  onTap: logic.friendSetup,
+                  child: SizedBox(
+                    width: Styles.controlHeight,
+                    height: Styles.controlHeight,
+                    child: Center(
+                      child: ImageRes.moreBlack.toImage
+                        ..width = 24.w
+                        ..height = 24.h,
+                    ),
+                  ),
+                )
               : null,
         ),
-        backgroundColor: Styles.c_F8F9FA,
+        backgroundColor: Styles.background,
         body: SizedBox(
           height: 1.sh,
           child: Stack(
             children: [
               SingleChildScrollView(
+                padding: EdgeInsets.only(
+                  bottom:
+                      ((logic.isFriendship || logic.allowSendMsgNotFriend) &&
+                              !logic.isMyself)
+                          ? 72 + MediaQuery.paddingOf(context).bottom
+                          : 16,
+                ),
                 child: Column(
                   children: [
                     _buildBaseInfoView(),
                     if (logic.isGroupMemberPage) _buildEnterGroupMethodView(),
                     if (logic.isFriendship ||
                         logic.isMyself ||
-                        logic.isGroupMemberPage && !logic.notAllowLookGroupMemberProfiles.value)
+                        logic.isGroupMemberPage &&
+                            !logic.notAllowLookGroupMemberProfiles.value)
                       _buildItemView(
                         label: StrRes.personalInfo,
                         showRightArrow: true,
                         onTap: logic.viewPersonalInfo,
                       ),
-                    SizedBox(height: 108.h),
                   ],
                 ),
               ),
-              if ((logic.isFriendship || logic.allowSendMsgNotFriend) && !logic.isMyself) _buildButtonGroup(),
+              if ((logic.isFriendship || logic.allowSendMsgNotFriend) &&
+                  !logic.isMyself)
+                _buildButtonGroup(),
             ],
           ),
         ),
@@ -56,34 +73,45 @@ class UserProfilePanelPage extends StatelessWidget {
     );
   }
 
+  /// 头像、身份与加好友动作集中为资料页首屏主区域。
   Widget _buildBaseInfoView() => Container(
-        color: Styles.c_FFFFFF,
-        height: 80.h,
-        margin: EdgeInsets.only(bottom: 10.h),
+        constraints: BoxConstraints(minHeight: 112.h),
+        margin: EdgeInsets.only(bottom: 12.h),
         padding: EdgeInsets.symmetric(horizontal: 16.w),
+        decoration: const BoxDecoration(
+          color: Styles.surface,
+          border: BorderDirectional(
+            bottom: BorderSide(
+              color: Styles.divider,
+              width: Styles.dividerWidth,
+            ),
+          ),
+        ),
         child: Row(
           children: [
             AvatarView(
               url: logic.userInfo.value.faceURL,
               text: logic.userInfo.value.nickname,
-              width: 48.w,
-              height: 48.h,
-              textStyle: Styles.ts_FFFFFF_14sp,
+              width: 64.w,
+              height: 64.h,
+              textStyle: Styles.ts_FFFFFF_17sp,
               enabledPreview: true,
             ),
-            12.horizontalSpace,
+            14.horizontalSpace,
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   logic.getShowName().toText
-                    ..style = Styles.ts_0C1C33_17sp_medium
+                    ..style = Styles.ts_0C1C33_20sp_semibold
                     ..maxLines = 1
                     ..overflow = TextOverflow.ellipsis,
-                  if (!logic.isGroupMemberPage || logic.isGroupMemberPage && !logic.notAllowAddGroupMemberFriend.value)
+                  if (!logic.isGroupMemberPage ||
+                      logic.isGroupMemberPage &&
+                          !logic.notAllowAddGroupMemberFriend.value)
                     Padding(
-                      padding: EdgeInsets.only(top: 4.h),
+                      padding: EdgeInsets.only(top: 6.h),
                       child: (logic.userInfo.value.userID ?? '').toText
                         ..style = Styles.ts_8E9AB0_14sp
                         ..onTap = logic.copyID,
@@ -96,25 +124,28 @@ class UserProfilePanelPage extends StatelessWidget {
                 !logic.isFriendship &&
                 (!logic.isGroupMemberPage ||
                     logic.forceCanAdd == true ||
-                    logic.isGroupMemberPage && !logic.notAllowAddGroupMemberFriend.value))
+                    logic.isGroupMemberPage &&
+                        !logic.notAllowAddGroupMemberFriend.value))
               Material(
+                color: Colors.transparent,
                 child: Ink(
+                  height: 44.h,
                   decoration: BoxDecoration(
-                    color: Styles.c_0089FF,
-                    borderRadius: BorderRadius.circular(6.r),
+                    color: Styles.primary,
+                    borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
                   ),
                   child: InkWell(
                     onTap: logic.addFriend,
+                    borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
                     child: Container(
                       padding: EdgeInsets.symmetric(
-                        horizontal: 9.w,
-                        vertical: 4.h,
+                        horizontal: 12.w,
                       ),
                       child: Row(
                         children: [
                           ImageRes.addContacts.toImage
-                            ..width = 21.w
-                            ..height = 21.h
+                            ..width = 20.w
+                            ..height = 20.h
                             ..color = Styles.c_FFFFFF,
                           2.horizontalSpace,
                           StrRes.add.toText..style = Styles.ts_FFFFFF_14sp,
@@ -128,14 +159,23 @@ class UserProfilePanelPage extends StatelessWidget {
         ),
       );
 
+  /// 入群信息保持原字段顺序，以固定标签列和可换行值列展示。
   Widget _buildEnterGroupMethodView() {
     if (logic.joinGroupTime.value == 0 && logic.joinGroupMethod.value.isEmpty) {
       return Container();
     }
     return Container(
-      color: Styles.c_FFFFFF,
-      margin: EdgeInsets.only(bottom: 10.h),
-      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+      margin: EdgeInsets.only(bottom: 12.h),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
+      decoration: const BoxDecoration(
+        color: Styles.surface,
+        border: Border.symmetric(
+          horizontal: BorderSide(
+            color: Styles.divider,
+            width: Styles.dividerWidth,
+          ),
+        ),
+      ),
       child: Table(
         defaultVerticalAlignment: TableCellVerticalAlignment.top,
         columnWidths: {0: FixedColumnWidth(100.w)},
@@ -166,14 +206,14 @@ class UserProfilePanelPage extends StatelessWidget {
         children: [
           TableCell(
             child: Container(
-              constraints: BoxConstraints(minHeight: 40.h),
+              constraints: BoxConstraints(minHeight: 48.h),
               alignment: Alignment.centerLeft,
-              child: label.toText..style = Styles.ts_8E9AB0_17sp,
+              child: label.toText..style = Styles.ts_8E9AB0_16sp,
             ),
           ),
           TableCell(
             child: Container(
-              constraints: BoxConstraints(minHeight: 40.h),
+              constraints: BoxConstraints(minHeight: 48.h),
               alignment: Alignment.centerLeft,
               child: (value ?? '').toText..style = Styles.ts_0C1C33_17sp,
             ),
@@ -181,6 +221,7 @@ class UserProfilePanelPage extends StatelessWidget {
         ],
       );
 
+  /// 资料入口沿用原状态和回调，改为带上下边界的连续列表行。
   Widget _buildItemView({
     required String label,
     String? value,
@@ -192,13 +233,21 @@ class UserProfilePanelPage extends StatelessWidget {
     Function()? onTap,
   }) =>
       Container(
-        margin: EdgeInsets.only(bottom: addMargin ? 10.h : 0),
+        margin: EdgeInsets.only(bottom: addMargin ? 12.h : 0),
         child: Ink(
-          color: Styles.c_FFFFFF,
-          height: 56.h,
+          decoration: const BoxDecoration(
+            color: Styles.surface,
+            border: Border.symmetric(
+              horizontal: BorderSide(
+                color: Styles.divider,
+                width: Styles.dividerWidth,
+              ),
+            ),
+          ),
           child: InkWell(
             onTap: onTap,
-            child: Padding(
+            child: Container(
+              constraints: BoxConstraints(minHeight: 56.h),
               padding: EdgeInsets.symmetric(horizontal: 16.w),
               child: Row(
                 children: [
@@ -210,7 +259,8 @@ class UserProfilePanelPage extends StatelessWidget {
                       activeColor: Styles.c_0089FF,
                       onChanged: onChanged,
                     ),
-                  if (null != value) value.toText..style = Styles.ts_0C1C33_17sp,
+                  if (null != value)
+                    value.toText..style = Styles.ts_0C1C33_17sp,
                   if (showRightArrow)
                     ImageRes.rightArrow.toImage
                       ..width = 24.w
@@ -222,31 +272,39 @@ class UserProfilePanelPage extends StatelessWidget {
         ),
       );
 
+  /// 底部通话与消息操作改为固定白色命令栏，避免玻璃模糊遮挡正文。
   Widget _buildButtonGroup() => Positioned(
-        bottom: 0.h,
-        width: 1.sw,
-        child: ClipRRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
-            child: Container(
-              color: Styles.c_F8F9FA.withOpacity(.3),
-              padding: EdgeInsets.symmetric(horizontal: 9.w),
-              height: 108.h,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: ImageTextButton.call(
-                      onTap: logic.toCall,
-                    ),
-                  ),
-                  11.horizontalSpace,
-                  Expanded(
-                    child: ImageTextButton.message(
-                      onTap: logic.toChat,
-                    ),
-                  ),
-                ],
+        left: 0,
+        right: 0,
+        bottom: 0,
+        child: SafeArea(
+          top: false,
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 72),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+            decoration: const BoxDecoration(
+              color: Styles.surface,
+              border: BorderDirectional(
+                top: BorderSide(
+                  color: Styles.divider,
+                  width: Styles.dividerWidth,
+                ),
               ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: ImageTextButton.call(
+                    onTap: logic.toCall,
+                  ),
+                ),
+                12.horizontalSpace,
+                Expanded(
+                  child: ImageTextButton.message(
+                    onTap: logic.toChat,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

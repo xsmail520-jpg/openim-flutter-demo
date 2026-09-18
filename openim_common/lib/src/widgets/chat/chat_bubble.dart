@@ -30,12 +30,15 @@ class ChatBubble extends StatelessWidget {
   Widget build(BuildContext context) => Container(
         constraints: constraints,
         margin: margin,
-        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
+        padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 9.h),
         alignment: alignment,
         decoration: BoxDecoration(
-          color:
-              backgroundColor ?? (isISend ? Styles.c_CCE7FE : Styles.c_F4F5F7),
+          color: backgroundColor ?? (isISend ? Styles.primary : Styles.surface),
           borderRadius: borderRadius(isISend),
+          border: Border.all(
+            color: isISend ? Styles.primaryPressed : Styles.divider,
+            width: Styles.dividerWidth,
+          ),
         ),
         child: child,
       );

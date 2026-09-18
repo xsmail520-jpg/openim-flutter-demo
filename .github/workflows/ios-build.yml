@@ -1,0 +1,84 @@
+name: iOS build (macOS)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/ios-build.yml'
+      - 'ios/**'
+      - 'lib/**'
+      - 'openim_common/**'
+      - 'openim_live/**'
+      - 'launcher_icon/**'
+      - 'flutter_launcher_icons.yaml'
+      - 'flutter_native_splash.yaml'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+      - 'analysis_options.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  build-ios:
+    name: Build unsigned iOS release
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter 3.32.8
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.32.8'
+          channel: stable
+          cache: true
+
+      - name: Show Apple build toolchain
+        run: |
+          flutter --version
+          xcodebuild -version
+          pod --version
+
+      - name: Resolve Flutter dependencies
+        run: flutter pub get
+
+      # This validates the native iOS build without storing Apple signing keys
+      # in GitHub. The resulting app is not installable until it is signed.
+      - name: Build unsigned iOS release
+        run: flutter build ios --release --no-codesign --no-pub
+
+      - name: Package iOS app artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          app_path=''
+          for candidate in build/ios/iphoneos/*.app; do
+            if [[ -d "$candidate" ]]; then
+              app_path="$candidate"
+              break
+            fi
+          done
+
+          if [[ -z "$app_path" ]]; then
+            echo 'No iOS .app output was produced.' >&2
+            exit 1
+          fi
+
+          mkdir -p artifacts
+          ditto -c -k --sequesterRsrc --keepParent \
+            "$app_path" \
+            "artifacts/openim-ios-unsigned-${GITHUB_RUN_NUMBER}.app.zip"
+
+      - name: Upload iOS app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: openim-ios-unsigned-${{ github.run_number }}
+          path: artifacts/*.app.zip
+          if-no-files-found: error
+          retention-days: 14

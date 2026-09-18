@@ -15,35 +15,16 @@ class SelectContactsFromFriendsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: TitleBar.back(title: StrRes.myFriend),
-      backgroundColor: Styles.c_F8F9FA,
+      appBar: TitleBar.back(
+        title: StrRes.myFriend,
+        showUnderline: true,
+      ),
+      backgroundColor: Styles.background,
       body: Column(
         children: [
           if (selectContactsLogic.isMultiModel)
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: 10.h),
-              child: Ink(
-                height: 64.h,
-                color: Styles.c_FFFFFF,
-                child: InkWell(
-                  onTap: logic.selectAll,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: Row(
-                      children: [
-                        Obx(() => Padding(
-                              padding: EdgeInsets.only(right: 10.w),
-                              child: ChatRadio(checked: logic.isSelectAll),
-                            )),
-                        10.horizontalSpace,
-                        StrRes.selectAll.toText..style = Styles.ts_0C1C33_17sp,
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          Flexible(
+            Obx(() => _buildSelectAllView()),
+          Expanded(
             child: Obx(
               () => WrapAzListView<ISUserInfo>(
                 data: logic.friendList,
@@ -58,30 +39,73 @@ class SelectContactsFromFriendsPage extends StatelessWidget {
     );
   }
 
+  /// 全选作为独立命令行展示，与联系人正文分区但不形成悬浮卡片。
+  Widget _buildSelectAllView() => Container(
+        margin: EdgeInsets.only(bottom: 8.h),
+        decoration: const BoxDecoration(
+          color: Styles.surface,
+          border: Border.symmetric(
+            horizontal: BorderSide(
+              color: Styles.divider,
+              width: Styles.dividerWidth,
+            ),
+          ),
+        ),
+        child: InkWell(
+          onTap: logic.selectAll,
+          child: Container(
+            constraints: BoxConstraints(minHeight: 56.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            child: Row(
+              children: [
+                ChatRadio(checked: logic.isSelectAll),
+                12.horizontalSpace,
+                StrRes.selectAll.toText..style = Styles.ts_0C1C33_17sp_medium,
+              ],
+            ),
+          ),
+        ),
+      );
+
+  /// 联系人按连续名录行呈现，头像、名称和选择状态保持稳定的扫描层级。
   Widget _buildItemView(ISUserInfo info) {
-    Widget buildChild() => Ink(
-          height: 64.h,
-          color: Styles.c_FFFFFF,
+    Widget buildChild() => Material(
+          color: Styles.surface,
           child: InkWell(
             onTap: selectContactsLogic.onTap(info),
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              constraints: BoxConstraints(minHeight: 64.h),
+              padding: EdgeInsets.only(left: 16.w, right: 28.w),
+              decoration: const BoxDecoration(
+                border: BorderDirectional(
+                  bottom: BorderSide(
+                    color: Styles.divider,
+                    width: Styles.dividerWidth,
+                  ),
+                ),
+              ),
               child: Row(
                 children: [
-                  if (selectContactsLogic.isMultiModel)
-                    Padding(
-                      padding: EdgeInsets.only(right: 10.w),
-                      child: ChatRadio(
-                        checked: selectContactsLogic.isChecked(info),
-                        enabled: !selectContactsLogic.isDefaultChecked(info),
-                      ),
+                  if (selectContactsLogic.isMultiModel) ...[
+                    ChatRadio(
+                      checked: selectContactsLogic.isChecked(info),
+                      enabled: !selectContactsLogic.isDefaultChecked(info),
                     ),
+                    12.horizontalSpace,
+                  ],
                   AvatarView(
                     url: info.faceURL,
                     text: info.showName,
+                    width: 42.w,
+                    height: 42.h,
                   ),
-                  10.horizontalSpace,
-                  info.showName.toText..style = Styles.ts_0C1C33_17sp,
+                  12.horizontalSpace,
+                  Expanded(
+                    child: info.showName.toText
+                      ..style = Styles.ts_0C1C33_17sp
+                      ..maxLines = 1
+                      ..overflow = TextOverflow.ellipsis,
+                  ),
                 ],
               ),
             ),

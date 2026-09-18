@@ -68,7 +68,7 @@ class PopButton extends StatelessWidget {
     this.menuItemIconHeight,
     this.menuItemPadding,
     this.lineColor,
-    this.lineWidth = 1.0,
+    this.lineWidth = Styles.dividerWidth,
   }) : super(key: key);
 
   @override
@@ -86,7 +86,9 @@ class PopButton extends StatelessWidget {
       menuBuilder: () => _buildPopBgView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: menus.map((e) => _buildPopItemView(e, showLine: menus.lastOrNull != e)).toList(),
+          children: menus
+              .map((e) => _buildPopItemView(e, showLine: menus.lastOrNull != e))
+              .toList(),
         ),
       ),
     );
@@ -103,21 +105,27 @@ class PopButton extends StatelessWidget {
 
   Widget _buildPopBgView({Widget? child}) => Container(
         decoration: BoxDecoration(
-          color: bgColor ?? Styles.c_FFFFFF,
-          borderRadius: BorderRadius.circular(bgRadius ?? 8.r),
+          color: bgColor ?? Styles.surface,
+          borderRadius:
+              BorderRadius.circular(bgRadius ?? Styles.radiusMedium.r),
+          border: Border.all(
+            color: Styles.divider,
+            width: Styles.dividerWidth,
+          ),
           boxShadow: [
             BoxShadow(
-              color: bgShadowColor ?? Styles.c_8E9AB0_opacity16,
-              offset: bgShadowOffset ?? Offset(0, 6.h),
-              blurRadius: bgShadowBlurRadius ?? 16.r,
-              spreadRadius: bgShadowSpreadRadius ?? 1.r,
+              color: bgShadowColor ?? Styles.ink.withValues(alpha: .08),
+              offset: bgShadowOffset ?? Offset(0, 2.h),
+              blurRadius: bgShadowBlurRadius ?? 8.r,
+              spreadRadius: bgShadowSpreadRadius ?? 0,
             )
           ],
         ),
         child: child,
       );
 
-  Widget _buildPopItemView(PopMenuInfo info, {bool showLine = true}) => GestureDetector(
+  Widget _buildPopItemView(PopMenuInfo info, {bool showLine = true}) =>
+      GestureDetector(
         onTap: () {
           popCtrl?.hideMenu();
           info.onTap?.call();
@@ -127,14 +135,14 @@ class PopButton extends StatelessWidget {
           height: menuItemHeight ?? 48.h,
           width: menuItemWidth,
           padding: menuItemPadding,
-          constraints: BoxConstraints(minWidth: 117.w),
+          constraints: BoxConstraints(minWidth: 132.w),
           margin: EdgeInsets.symmetric(horizontal: 12.w),
           decoration: showLine
               ? BoxDecoration(
                   border: BorderDirectional(
                     bottom: BorderSide(
-                      color: lineColor ?? Styles.c_E8EAEF,
-                      width: lineWidth ?? 1,
+                      color: lineColor ?? Styles.divider,
+                      width: lineWidth ?? Styles.dividerWidth,
                     ),
                   ),
                 )
@@ -148,7 +156,8 @@ class PopButton extends StatelessWidget {
                         padding: EdgeInsets.only(right: 12.w),
                         child: info.iconWidget,
                       ),
-                    info.text.toText..style = (menuItemTextStyle ?? Styles.ts_0C1C33_17sp),
+                    info.text.toText
+                      ..style = (menuItemTextStyle ?? Styles.ts_0C1C33_17sp),
                   ],
                 )
               : Row(
@@ -161,7 +170,8 @@ class PopButton extends StatelessWidget {
                           ..width = (menuItemIconWidth ?? 20.w)
                           ..height = (menuItemIconHeight ?? 20.h),
                       ),
-                    info.text.toText..style = (menuItemTextStyle ?? Styles.ts_0C1C33_17sp),
+                    info.text.toText
+                      ..style = (menuItemTextStyle ?? Styles.ts_0C1C33_17sp),
                   ],
                 ),
         ),

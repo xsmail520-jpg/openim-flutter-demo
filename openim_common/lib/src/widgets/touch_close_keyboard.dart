@@ -23,16 +23,7 @@ class TouchCloseSoftKeyboard extends StatelessWidget {
       },
       child: isGradientBg
           ? Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Styles.c_0089FF_opacity10,
-                    Styles.c_FFFFFF_opacity0,
-                  ],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-              ),
+              color: Styles.background,
               child: child,
             )
           : child,

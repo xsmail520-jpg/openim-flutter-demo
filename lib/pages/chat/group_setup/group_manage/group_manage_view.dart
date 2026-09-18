@@ -14,77 +14,100 @@ class GroupManagePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: TitleBar.back(
-        title: StrRes.groupManage,
-      ),
-      backgroundColor: Styles.c_F8F9FA,
-      body: Column(
-        children: [
-          _buildItemView(
-            text: StrRes.transferGroupOwnerRight,
-            onTap: logic.transferGroupOwnerRight,
-            showRightArrow: true,
-            isTopRadius: true,
-            isBottomRadius: true,
-          ),
-        ],
-      ),
+      appBar: TitleBar.back(title: StrRes.groupManage),
+      backgroundColor: Styles.background,
+      body: Obx(() => ListView(
+            padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
+            children: [
+              _buildSwitchEntry(
+                title: '锁群（全员禁言）',
+                subtitle: '开启后普通成员不能发送消息',
+                value: logic.isGroupLocked,
+                onChanged: logic.changeGroupLock,
+              ),
+              12.verticalSpace,
+              _buildSwitchEntry(
+                title: '群成员隐私保护',
+                subtitle: '普通成员不能查看成员资料、人数或从群内添加好友',
+                value: logic.privacyEnabled,
+                onChanged: logic.changeGroupPrivacy,
+              ),
+              12.verticalSpace,
+              if (logic.groupSetupLogic.isOwner) _buildTransferEntry(),
+            ],
+          )),
     );
   }
 
-  Widget _buildItemView({
-    required String text,
-    TextStyle? textStyle,
-    String? value,
-    bool switchOn = false,
-    bool isTopRadius = false,
-    bool isBottomRadius = false,
-    bool showRightArrow = false,
-    bool showSwitchButton = false,
-    ValueChanged<bool>? onChanged,
-    Function()? onTap,
-  }) =>
-      GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.translucent,
-        child: Container(
-          height: 46.h,
-          margin: EdgeInsets.symmetric(horizontal: 10.w),
-          padding: EdgeInsets.symmetric(horizontal: 16.w),
-          decoration: BoxDecoration(
-            color: Styles.c_FFFFFF,
-            borderRadius: BorderRadius.only(
-              topRight: Radius.circular(isTopRadius ? 6.r : 0),
-              topLeft: Radius.circular(isTopRadius ? 6.r : 0),
-              bottomLeft: Radius.circular(isBottomRadius ? 6.r : 0),
-              bottomRight: Radius.circular(isBottomRadius ? 6.r : 0),
+  /// 以单一高优先级操作行呈现群主转让入口，避免孤立的小卡片样式。
+  Widget _buildTransferEntry() => Material(
+        color: Styles.surface,
+        borderRadius: BorderRadius.circular(6.r),
+        child: InkWell(
+          onTap: logic.transferGroupOwnerRight,
+          borderRadius: BorderRadius.circular(6.r),
+          child: Container(
+            constraints: BoxConstraints(minHeight: 60.h),
+            decoration: BoxDecoration(
+              border: Border.all(color: Styles.divider),
+              borderRadius: BorderRadius.circular(6.r),
             ),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: text.toText..style = textStyle ?? Styles.ts_0C1C33_17sp,
-              ),
-              if (null != value)
-                ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: 150.w),
-                  child: value.toText
-                    ..style = Styles.ts_8E9AB0_14sp
-                    ..maxLines = 1
-                    ..overflow = TextOverflow.ellipsis,
+            child: Row(
+              children: [
+                Container(
+                  width: 4.w,
+                  height: 36.h,
+                  decoration: BoxDecoration(
+                    color: Styles.primary,
+                    borderRadius: BorderRadius.horizontal(
+                      right: Radius.circular(4.r),
+                    ),
+                  ),
                 ),
-              if (showSwitchButton)
-                CupertinoSwitch(
-                  value: switchOn,
-                  activeColor: Styles.c_0089FF,
-                  onChanged: onChanged,
+                12.horizontalSpace,
+                Expanded(
+                  child: StrRes.transferGroupOwnerRight.toText
+                    ..style = Styles.ts_0C1C33_17sp_medium,
                 ),
-              if (showRightArrow)
                 ImageRes.rightArrow.toImage
                   ..width = 24.w
                   ..height = 24.h,
-            ],
+                12.horizontalSpace,
+              ],
+            ),
           ),
         ),
+      );
+
+  Widget _buildSwitchEntry({
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) =>
+      Container(
+        padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+        decoration: BoxDecoration(
+          color: Styles.surface,
+          border: Border.all(color: Styles.divider),
+          borderRadius: BorderRadius.circular(6.r),
+        ),
+        child: Row(children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                title.toText..style = Styles.ts_0C1C33_17sp_medium,
+                4.verticalSpace,
+                subtitle.toText..style = Styles.ts_8E9AB0_14sp,
+              ],
+            ),
+          ),
+          CupertinoSwitch(
+            value: value,
+            activeColor: Styles.primary,
+            onChanged: onChanged,
+          ),
+        ]),
       );
 }

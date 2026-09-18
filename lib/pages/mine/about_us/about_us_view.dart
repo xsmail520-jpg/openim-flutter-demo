@@ -15,115 +15,129 @@ class AboutUsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: TitleBar.back(title: StrRes.aboutUs),
-      backgroundColor: Styles.c_F8F9FA,
-      body: Column(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              color: Styles.c_FFFFFF,
-              borderRadius: BorderRadius.circular(6.r),
-            ),
-            margin: EdgeInsets.symmetric(
-              horizontal: 10.w,
-              vertical: 10.h,
-            ),
-            child: Column(
-              children: [
-                23.verticalSpace,
-                ImageRes.splashLogo.toImage
-                  ..width = 55.w
-                  ..height = 78.h,
-                10.verticalSpace,
-                Obx(() => '${logic.displayVersion}'.toText
-                  ..style = Styles.ts_0C1C33_14sp
-                  ..onTap = logic.copyVersion),
-                16.verticalSpace,
-                Container(
-                  margin: EdgeInsets.symmetric(horizontal: 10.w),
-                  color: Styles.c_E8EAEF,
-                  height: .5,
-                ),
-                GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  onTap: logic.checkUpdate,
-                  child: Container(
-                    height: 57.h,
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: Row(
-                      children: [
-                        StrRes.checkNewVersion.toText..style = Styles.ts_0C1C33_17sp,
-                        const Spacer(),
-                        ImageRes.rightArrow.toImage
-                          ..width = 24.w
-                          ..height = 24.h,
-                      ],
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  onTap: logic.uploadLogs,
-                  child: Container(
-                    height: 57.h,
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: Row(
-                      children: [
-                        StrRes.uploadErrorLog.toText..style = Styles.ts_0C1C33_17sp,
-                        const Spacer(),
-                        ImageRes.rightArrow.toImage
-                          ..width = 24.w
-                          ..height = 24.h,
-                      ],
-                    ),
-                  ),
-                ),
-                GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  onTap: _showInputDialog,
-                  child: Container(
-                    height: 57.h,
-                    padding: EdgeInsets.symmetric(horizontal: 16.w),
-                    child: Row(
-                      children: [
-                        StrRes.uploadLogWithLine.toText..style = Styles.ts_0C1C33_17sp,
-                        const Spacer(),
-                        ImageRes.rightArrow.toImage
-                          ..width = 24.w
-                          ..height = 24.h,
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+      backgroundColor: Styles.background,
+      body: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
+        child: Column(
+          children: [
+            _buildIdentityHeader(),
+            12.verticalSpace,
+            _buildActionList(),
+          ],
+        ),
       ),
     );
   }
 
-  void _showInputDialog() {
-    showDialog(
-        context: Get.context!,
-        builder: (ctx) {
-          return CupertinoAlertDialog(
-            title: StrRes.setLines.toText..style = Styles.ts_0C1C33_17sp,
-            content: CupertinoTextField(
-              controller: logic.lineTextController,
-              placeholder: logic.lineTextController.text,
-              keyboardType: TextInputType.number,
+  /// 品牌与版本信息集中在文档式页首，版本复制行为保持不变。
+  Widget _buildIdentityHeader() => Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Styles.surface,
+          borderRadius: BorderRadius.circular(6.r),
+          border: Border.all(color: Styles.divider),
+        ),
+        child: Column(
+          children: [
+            Container(
+              height: 4.h,
+              decoration: BoxDecoration(
+                color: Styles.primary,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(5.r)),
+              ),
             ),
-            actions: [
-              CupertinoButton(
-                child: StrRes.confirm.toText..style = Styles.ts_0C1C33_17sp,
-                onPressed: () {
-                  navigator?.pop();
-                  final lineStr = logic.lineTextController.text.trim();
-                  logic.uploadLogs(int.parse(lineStr));
-                },
-              )
-            ],
-          );
-        });
+            22.verticalSpace,
+            ImageRes.splashLogo.toImage
+              ..width = 64.w
+              ..height = 64.w,
+            10.verticalSpace,
+            Obx(
+              () => '${logic.displayVersion}'.toText
+                ..style = Styles.ts_0C1C33_14sp_medium
+                ..onTap = logic.copyVersion,
+            ),
+            20.verticalSpace,
+          ],
+        ),
+      );
+
+  /// 更新与日志操作以连续列表呈现，减少多层卡片和阴影。
+  Widget _buildActionList() => Container(
+        decoration: BoxDecoration(
+          color: Styles.surface,
+          borderRadius: BorderRadius.circular(6.r),
+          border: Border.all(color: Styles.divider),
+        ),
+        child: Column(
+          children: [
+            _buildAction(StrRes.checkNewVersion, logic.checkUpdate),
+            _buildAction(
+              StrRes.uploadErrorLog,
+              _showDiagnosisSheet,
+              showDivider: false,
+            ),
+          ],
+        ),
+      );
+
+  Widget _buildAction(
+    String text,
+    Function() onTap, {
+    bool showDivider = true,
+  }) =>
+      Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            constraints: BoxConstraints(minHeight: 58.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            decoration: BoxDecoration(
+              border: showDivider
+                  ? Border(bottom: BorderSide(color: Styles.divider))
+                  : null,
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: text.toText..style = Styles.ts_0C1C33_17sp,
+                ),
+                ImageRes.rightArrow.toImage
+                  ..width = 24.w
+                  ..height = 24.h,
+              ],
+            ),
+          ),
+        ),
+      );
+
+  void _showDiagnosisSheet() {
+    showCupertinoModalPopup(
+      context: Get.context!,
+      builder: (context) => CupertinoActionSheet(
+        title: const Text('问题诊断'),
+        message: const Text('诊断信息仅用于协助排查使用问题，不包含聊天内容。'),
+        actions: [
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              logic.uploadLogs(1000);
+            },
+            child: Text(StrRes.uploadLogWithLine),
+          ),
+          CupertinoActionSheetAction(
+            onPressed: () {
+              Navigator.pop(context);
+              logic.uploadLogs();
+            },
+            child: const Text('提交完整的诊断信息'),
+          ),
+        ],
+        cancelButton: CupertinoActionSheetAction(
+          onPressed: () => Navigator.pop(context),
+          child: Text(StrRes.cancel),
+        ),
+      ),
+    );
   }
 }

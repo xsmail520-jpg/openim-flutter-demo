@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:audio_session/audio_session.dart';
 import 'package:device_info_plus/device_info_plus.dart';
@@ -16,6 +17,7 @@ import 'package:sound_mode/utils/ringer_mode_statuses.dart';
 import 'package:vibration/vibration.dart';
 
 import '../../utils/upgrade_manager.dart';
+import '../../routes/app_navigator.dart';
 import 'im_controller.dart';
 
 class AppController extends GetxController with UpgradeManger {
@@ -23,9 +25,11 @@ class AppController extends GetxController with UpgradeManger {
 
   final flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
-  final initializationSettingsAndroid = const AndroidInitializationSettings('@mipmap/ic_launcher');
+  final initializationSettingsAndroid =
+      const AndroidInitializationSettings('@drawable/ic_stat_notification');
 
-  final DarwinInitializationSettings initializationSettingsDarwin = const DarwinInitializationSettings(
+  final DarwinInitializationSettings initializationSettingsDarwin =
+      const DarwinInitializationSettings(
     requestAlertPermission: false,
     requestBadgePermission: false,
     requestSoundPermission: false,
@@ -35,7 +39,8 @@ class AppController extends GetxController with UpgradeManger {
 
   bool get shouldMuted =>
       rtcBridge?.hasConnection == true ||
-      Get.find<IMController>().imSdkStatusSubject.values.last.status != IMSdkStatus.syncEnded;
+      Get.find<IMController>().imSdkStatusSubject.values.last.status !=
+          IMSdkStatus.syncEnded;
 
   final _ring = 'assets/audio/message_ring.wav';
   final _audioPlayer = AudioPlayer();
@@ -51,6 +56,7 @@ class AppController extends GetxController with UpgradeManger {
   late AudioSession session;
 
   late BaseDeviceInfo deviceInfo;
+  Map<String, dynamic>? _pendingPushData;
 
   final clientConfigMap = <String, dynamic>{}.obs;
 
@@ -73,21 +79,39 @@ class AppController extends GetxController with UpgradeManger {
     );
     await flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
-      onDidReceiveNotificationResponse: (notificationResponse) {},
+      onDidReceiveNotificationResponse: (notificationResponse) {
+        final payload = notificationResponse.payload;
+        if (payload == null || payload.isEmpty) return;
+        try {
+          _openNotificationTarget(
+              Map<String, dynamic>.from(jsonDecode(payload) as Map));
+        } catch (e) {
+          Logger.print('notification payload decode failed: $e');
+        }
+      },
     );
+
+    PushController.configure(
+      onForegroundMessage: _showPushNotification,
+      onNotificationOpened: _openNotificationTarget,
+    );
+    PushController.initialize();
 
     autoCheckVersionUpgrade();
     super.onInit();
   }
 
-  Future<void> showNotification(im.Message message, {bool showNotification = true}) async {
+  Future<void> showNotification(im.Message message,
+      {bool showNotification = true}) async {
     if (_isGlobalNotDisturb() ||
         message.attachedInfoElem?.notSenderNotificationPush == true ||
         message.contentType == im.MessageType.typing ||
         message.sendID == OpenIM.iMManager.userID ||
         (message.contentType! >= 1000 && message.contentType != 1400)) return;
 
-    var sourceID = message.sessionType == ConversationType.single ? message.sendID : message.groupID;
+    var sourceID = message.sessionType == ConversationType.single
+        ? message.sendID
+        : message.groupID;
     if (sourceID != null && message.sessionType != null) {
       var i = await OpenIM.iMManager.conversationManager.getOneConversation(
         sourceID: sourceID,
@@ -97,12 +121,25 @@ class AppController extends GetxController with UpgradeManger {
     }
 
     if (showNotification) {
-      promptSoundOrNotification(message.seq!);
+      String? body;
+      try {
+        body = IMUtils.parseMsg(message, isConversation: true);
+      } catch (_) {}
+      promptSoundOrNotification(
+        message.seq!,
+        title: message.senderNickname,
+        body: body,
+      );
     }
   }
 
-  Future<void> promptSoundOrNotification(int seq) async {
-    if (Get.find<IMController>().imSdkStatusSubject.values.lastOrNull?.status != IMSdkStatus.syncEnded) {
+  Future<void> promptSoundOrNotification(
+    int seq, {
+    String? title,
+    String? body,
+  }) async {
+    if (Get.find<IMController>().imSdkStatusSubject.values.lastOrNull?.status !=
+        IMSdkStatus.syncEnded) {
       return;
     }
     if (!isRunningBackground) {
@@ -111,20 +148,116 @@ class AppController extends GetxController with UpgradeManger {
       if (Platform.isAndroid) {
         final id = seq;
 
-        const androidPlatformChannelSpecifics = AndroidNotificationDetails('chat', 'OpenIM Chat',
-            channelDescription: 'OpenIM Chat Message', importance: Importance.max, priority: Priority.high, ticker: 'ticker');
-        const NotificationDetails platformChannelSpecifics =
-            NotificationDetails(android: androidPlatformChannelSpecifics);
-        await flutterLocalNotificationsPlugin.show(id, 'You have a new message', 'Message：.....', platformChannelSpecifics,
+        final user = Get.find<IMController>().userInfo.value;
+        final androidPlatformChannelSpecifics = AndroidNotificationDetails(
+          'chat',
+          '追逐梦',
+          channelDescription: '追逐梦消息通知',
+          importance: Importance.max,
+          priority: Priority.high,
+          icon: 'ic_stat_notification',
+          ticker: 'ticker',
+          playSound: user.allowBeep == 1,
+          enableVibration: user.allowVibration == 1,
+        );
+        final platformChannelSpecifics = NotificationDetails(
+          android: androidPlatformChannelSpecifics,
+        );
+        final preview = DataSp.getNotificationPreview();
+        await flutterLocalNotificationsPlugin.show(
+            id,
+            preview ? (title ?? '追逐梦') : '追逐梦',
+            preview ? (body ?? '收到一条新消息') : '收到一条新消息',
+            platformChannelSpecifics,
             payload: '');
       }
     }
   }
 
+  Future<void> _showPushNotification(Map<String, dynamic> data) async {
+    if (data.isEmpty) return;
+    if (_isGlobalNotDisturb()) return;
+    final title = '${data['title'] ?? '追逐梦'}';
+    final body = DataSp.getNotificationPreview()
+        ? '${data['body'] ?? data['desc'] ?? '收到一条新消息'}'
+        : '收到一条新消息';
+    if (!Platform.isAndroid) return;
+    final user = Get.find<IMController>().userInfo.value;
+    final details = NotificationDetails(
+      android: AndroidNotificationDetails(
+        'chat',
+        '追逐梦消息',
+        channelDescription: '聊天消息通知',
+        importance: Importance.max,
+        priority: Priority.high,
+        icon: 'ic_stat_notification',
+        playSound: user.allowBeep == 1,
+        enableVibration: user.allowVibration == 1,
+      ),
+    );
+    await flutterLocalNotificationsPlugin.show(
+      DateTime.now().millisecondsSinceEpoch.remainder(1 << 31),
+      title,
+      body,
+      details,
+      payload: jsonEncode(data),
+    );
+  }
+
+  Future<void> _openNotificationTarget(Map<String, dynamic> data) async {
+    if (data.isEmpty) return;
+    final ex = data['ex'];
+    if (ex is String && ex.isNotEmpty) {
+      try {
+        final extra = jsonDecode(ex);
+        if (extra is Map) {
+          data = {...Map<String, dynamic>.from(extra), ...data};
+        }
+      } catch (_) {}
+    }
+    if (!Get.isRegistered<IMController>() || OpenIM.iMManager.userID.isEmpty) {
+      _pendingPushData = data;
+      return;
+    }
+    final sourceID =
+        '${data['sourceID'] ?? data['userID'] ?? data['groupID'] ?? ''}';
+    final sessionType =
+        int.tryParse('${data['sessionType'] ?? ConversationType.single}');
+    if (sourceID.isEmpty || sessionType == null) {
+      _pendingPushData = data;
+      return;
+    }
+    try {
+      final conversation =
+          await OpenIM.iMManager.conversationManager.getOneConversation(
+        sourceID: sourceID,
+        sessionType: sessionType,
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      await AppNavigator.startChat(
+          offUntilHome: false, conversationInfo: conversation);
+    } catch (e) {
+      _pendingPushData = data;
+      Logger.print('notification deep link failed: $e');
+    }
+  }
+
+  Future<void> consumePendingPush() async {
+    final data = _pendingPushData;
+    _pendingPushData = null;
+    if (data != null) await _openNotificationTarget(data);
+  }
+
   Future<void> _cancelAllNotifications() async {
     await flutterLocalNotificationsPlugin.cancelAll();
   }
+
   void showBadge(count) {
+    if (!DataSp.getShowUnreadBadge()) {
+      OpenIM.iMManager.messageManager.setAppBadge(0);
+      removeBadge();
+      return;
+    }
     OpenIM.iMManager.messageManager.setAppBadge(count);
 
     if (count == 0) {
@@ -163,6 +296,12 @@ class AppController extends GetxController with UpgradeManger {
       case 2:
         local = const Locale('en', 'US');
         break;
+      case 3:
+        local = const Locale('zh', 'TW');
+        break;
+      case 4:
+        local = const Locale('vi', 'VN');
+        break;
     }
     return local;
   }
@@ -179,7 +318,8 @@ class AppController extends GetxController with UpgradeManger {
     bool isRegistered = Get.isRegistered<IMController>();
     if (isRegistered) {
       var logic = Get.find<IMController>();
-      return logic.userInfo.value.globalRecvMsgOpt == 2;
+      final value = logic.userInfo.value.globalRecvMsgOpt;
+      return value == 1 || value == 2;
     }
     return false;
   }
@@ -219,12 +359,14 @@ class AppController extends GetxController with UpgradeManger {
 
     RingerModeStatus ringerStatus = await SoundMode.ringerModeStatus;
 
-    Logger.print('System ringer status: $ringerStatus, user is allow beep: $isAllowBeep',
+    Logger.print(
+        'System ringer status: $ringerStatus, user is allow beep: $isAllowBeep',
         fileName: 'app_controller.dart');
 
     if (!_audioPlayer.playerState.playing &&
         isAllowBeep &&
-        (ringerStatus == RingerModeStatus.normal || ringerStatus == RingerModeStatus.unknown)) {
+        (ringerStatus == RingerModeStatus.normal ||
+            ringerStatus == RingerModeStatus.unknown)) {
       await session.setActive(true);
       _audioPlayer.setAsset(_ring, package: 'openim_common');
       _audioPlayer.setLoopMode(LoopMode.off);

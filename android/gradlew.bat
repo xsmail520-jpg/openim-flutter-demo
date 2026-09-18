@@ -8,6 +8,24 @@
 @rem Set local scope for the variables with windows NT shell
 if "%OS%"=="Windows_NT" setlocal
 
+@rem Optional local Gradle distribution override. Set OPENIM_GRADLE_HOME to an
+@rem already-installed Gradle directory to avoid wrapper distribution downloads.
+if defined OPENIM_GRADLE_HOME (
+    if exist "%OPENIM_GRADLE_HOME%\bin\gradle.bat" (
+        call "%OPENIM_GRADLE_HOME%\bin\gradle.bat" %*
+        exit /b %ERRORLEVEL%
+    )
+)
+
+@rem Prefer the distribution checked into this project. Keeping the launcher
+@rem before the wrapper bootstrap makes Flutter and direct Gradle invocations
+@rem use the same local binary without downloading or extracting Gradle.
+set "OPENIM_BUNDLED_GRADLE_HOME=%~dp0gradle-local\gradle-8.9"
+if exist "%OPENIM_BUNDLED_GRADLE_HOME%\bin\gradle.bat" (
+    call "%OPENIM_BUNDLED_GRADLE_HOME%\bin\gradle.bat" %*
+    exit /b %ERRORLEVEL%
+)
+
 @rem Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
 set DEFAULT_JVM_OPTS=
 

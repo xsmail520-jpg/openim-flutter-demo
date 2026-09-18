@@ -1,19 +1,19 @@
 import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_openim_sdk/flutter_openim_sdk.dart';
 import 'package:get/get.dart';
 import 'package:openim_common/openim_common.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:openim_live/openim_live.dart';
 
 import '../im_callback.dart';
+import '../network_route/network_route_controller.dart';
 
 class IMController extends GetxController with IMCallback, OpenIMLive {
   late Rx<UserFullInfo> userInfo;
   late String atAllTag;
+  bool _isInitializing = false;
+  bool _isInitialized = false;
 
   @override
   void onClose() {
@@ -29,137 +29,161 @@ class IMController extends GetxController with IMCallback, OpenIMLive {
     WidgetsBinding.instance.addPostFrameCallback((_) => initOpenIM());
   }
 
-  void initOpenIM() async {
-    final initialized = await OpenIM.iMManager.initSDK(
-      platformID: IMUtils.getPlatform(),
-      apiAddr: Config.imApiUrl,
-      wsAddr: Config.imWsUrl,
-      dataDir: Config.cachePath,
-      logLevel: Config.logLevel,
-      logFilePath: Config.cachePath,
-      listener: OnConnectListener(
-        onConnecting: () {
-          imSdkStatus(IMSdkStatus.connecting);
-        },
-        onConnectFailed: (code, error) {
-          imSdkStatus(IMSdkStatus.connectionFailed);
-        },
-        onConnectSuccess: () {
-          imSdkStatus(IMSdkStatus.connectionSucceeded);
-        },
-        onKickedOffline: kickedOffline,
-        onUserTokenExpired: kickedOffline,
-        onUserTokenInvalid: userTokenInvalid,
-      ),
-    );
-
-    OpenIM.iMManager
-      ..setUploadLogsListener(OnUploadLogsListener(onUploadProgress: uploadLogsProgress))
-      ..userManager.setUserListener(OnUserListener(
-          onSelfInfoUpdated: (u) {
-            selfInfoUpdated(u);
-
-            userInfo.update((val) {
-              val?.nickname = u.nickname;
-              val?.faceURL = u.faceURL;
-
-              val?.remark = u.remark;
-              val?.ex = u.ex;
-              val?.globalRecvMsgOpt = u.globalRecvMsgOpt;
-            });
+  /// OpenIM 只在本应用内置节点代理已验证后初始化，重试期间拒绝并发初始化。
+  Future<void> initOpenIM() async {
+    if (_isInitializing || _isInitialized) {
+      return;
+    }
+    _isInitializing = true;
+    final routeReady = await Get.find<NetworkRouteController>().ensureReady();
+    if (!routeReady) {
+      _isInitializing = false;
+      return;
+    }
+    try {
+      final initialized = await OpenIM.iMManager.initSDK(
+        platformID: IMUtils.getPlatform(),
+        apiAddr: Config.imApiUrl,
+        wsAddr: Config.imWsUrl,
+        dataDir: Config.cachePath,
+        logLevel: Config.logLevel,
+        logFilePath: Config.cachePath,
+        listener: OnConnectListener(
+          onConnecting: () {
+            imSdkStatus(IMSdkStatus.connecting);
           },
-          onUserStatusChanged: userStausChanged))
-      ..messageManager.setAdvancedMsgListener(OnAdvancedMsgListener(
-        onRecvC2CReadReceipt: recvC2CMessageReadReceipt,
-        onRecvNewMessage: recvNewMessage,
-        onNewRecvMessageRevoked: recvMessageRevoked,
-        onRecvOfflineNewMessage: recvOfflineMessage,
-        onRecvOnlineOnlyMessage: (msg) {
-          if (msg.isCustomType) {
-            final data = msg.customElem!.data;
-            final map = jsonDecode(data!);
-            final customType = map['customType'];
-            if (customType == CustomMessageType.callingInvite ||
-                customType == CustomMessageType.callingAccept ||
-                customType == CustomMessageType.callingReject ||
-                customType == CustomMessageType.callingCancel ||
-                customType == CustomMessageType.callingHungup) {
-              final signaling = SignalingInfo(invitation: InvitationInfo.fromJson(map['data']));
-              signaling.userID = signaling.invitation?.inviterUserID;
+          onConnectFailed: (code, error) {
+            imSdkStatus(IMSdkStatus.connectionFailed);
+          },
+          onConnectSuccess: () {
+            imSdkStatus(IMSdkStatus.connectionSucceeded);
+          },
+          onKickedOffline: kickedOffline,
+          onUserTokenExpired: kickedOffline,
+          onUserTokenInvalid: userTokenInvalid,
+        ),
+      );
 
-              switch (customType) {
-                case CustomMessageType.callingInvite:
-                  receiveNewInvitation(signaling);
-                  break;
-                case CustomMessageType.callingAccept:
-                  inviteeAccepted(signaling);
-                  break;
-                case CustomMessageType.callingReject:
-                  inviteeRejected(signaling);
-                  break;
-                case CustomMessageType.callingCancel:
-                  invitationCancelled(signaling);
-                  break;
-                case CustomMessageType.callingHungup:
-                  beHangup(signaling);
-                  break;
+      OpenIM.iMManager
+        ..setUploadLogsListener(
+            OnUploadLogsListener(onUploadProgress: uploadLogsProgress))
+        ..userManager.setUserListener(OnUserListener(
+            onSelfInfoUpdated: (u) {
+              selfInfoUpdated(u);
+
+              userInfo.update((val) {
+                val?.nickname = u.nickname;
+                val?.faceURL = u.faceURL;
+
+                val?.remark = u.remark;
+                val?.ex = u.ex;
+                val?.globalRecvMsgOpt = u.globalRecvMsgOpt;
+              });
+            },
+            onUserStatusChanged: userStausChanged))
+        ..messageManager.setAdvancedMsgListener(OnAdvancedMsgListener(
+          onRecvC2CReadReceipt: recvC2CMessageReadReceipt,
+          onRecvNewMessage: recvNewMessage,
+          onNewRecvMessageRevoked: recvMessageRevoked,
+          onRecvOfflineNewMessage: recvOfflineMessage,
+          onRecvOnlineOnlyMessage: (msg) {
+            if (msg.isCustomType) {
+              final data = msg.customElem!.data;
+              final map = jsonDecode(data!);
+              final customType = map['customType'];
+              if (customType == CustomMessageType.callingInvite ||
+                  customType == CustomMessageType.callingAccept ||
+                  customType == CustomMessageType.callingReject ||
+                  customType == CustomMessageType.callingCancel ||
+                  customType == CustomMessageType.callingHungup) {
+                final signaling = SignalingInfo(
+                    invitation: InvitationInfo.fromJson(map['data']));
+                signaling.userID = signaling.invitation?.inviterUserID;
+
+                switch (customType) {
+                  case CustomMessageType.callingInvite:
+                    receiveNewInvitation(signaling);
+                    break;
+                  case CustomMessageType.callingAccept:
+                    inviteeAccepted(signaling);
+                    break;
+                  case CustomMessageType.callingReject:
+                    inviteeRejected(signaling);
+                    break;
+                  case CustomMessageType.callingCancel:
+                    invitationCancelled(signaling);
+                    break;
+                  case CustomMessageType.callingHungup:
+                    beHangup(signaling);
+                    break;
+                }
               }
             }
-          }
-        },
-      ))
-      ..messageManager.setMsgSendProgressListener(OnMsgSendProgressListener(
-        onProgress: progressCallback,
-      ))
-      ..messageManager.setCustomBusinessListener(OnCustomBusinessListener(
-        onRecvCustomBusinessMessage: recvCustomBusinessMessage,
-      ))
-      ..friendshipManager.setFriendshipListener(OnFriendshipListener(
-        onBlackAdded: blacklistAdded,
-        onBlackDeleted: blacklistDeleted,
-        onFriendApplicationAccepted: friendApplicationAccepted,
-        onFriendApplicationAdded: friendApplicationAdded,
-        onFriendApplicationDeleted: friendApplicationDeleted,
-        onFriendApplicationRejected: friendApplicationRejected,
-        onFriendInfoChanged: friendInfoChanged,
-        onFriendAdded: friendAdded,
-        onFriendDeleted: friendDeleted,
-      ))
-      ..conversationManager.setConversationListener(OnConversationListener(
-          onConversationChanged: conversationChanged,
-          onNewConversation: newConversation,
-          onTotalUnreadMessageCountChanged: totalUnreadMsgCountChanged,
-          onInputStatusChanged: inputStateChanged,
-          onSyncServerFailed: (reInstall) {
-            imSdkStatus(IMSdkStatus.syncFailed, reInstall: reInstall ?? false);
           },
-          onSyncServerFinish: (reInstall) {
-            imSdkStatus(IMSdkStatus.syncEnded, reInstall: reInstall ?? false);
-            if (Platform.isAndroid) {
-              Permissions.request([Permission.systemAlertWindow]);
-            }
-          },
-          onSyncServerStart: (reInstall) {
-            imSdkStatus(IMSdkStatus.syncStart, reInstall: reInstall ?? false);
-          },
-          onSyncServerProgress: (progress) {
-            imSdkStatus(IMSdkStatus.syncProgress, progress: progress);
-          }))
-      ..groupManager.setGroupListener(OnGroupListener(
-        onGroupApplicationAccepted: groupApplicationAccepted,
-        onGroupApplicationAdded: groupApplicationAdded,
-        onGroupApplicationDeleted: groupApplicationDeleted,
-        onGroupApplicationRejected: groupApplicationRejected,
-        onGroupInfoChanged: groupInfoChanged,
-        onGroupMemberAdded: groupMemberAdded,
-        onGroupMemberDeleted: groupMemberDeleted,
-        onGroupMemberInfoChanged: groupMemberInfoChanged,
-        onJoinedGroupAdded: joinedGroupAdded,
-        onJoinedGroupDeleted: joinedGroupDeleted,
-      ));
+        ))
+        ..messageManager.setMsgSendProgressListener(OnMsgSendProgressListener(
+          onProgress: progressCallback,
+        ))
+        ..messageManager.setCustomBusinessListener(OnCustomBusinessListener(
+          onRecvCustomBusinessMessage: recvCustomBusinessMessage,
+        ))
+        ..friendshipManager.setFriendshipListener(OnFriendshipListener(
+          onBlackAdded: blacklistAdded,
+          onBlackDeleted: blacklistDeleted,
+          onFriendApplicationAccepted: friendApplicationAccepted,
+          onFriendApplicationAdded: friendApplicationAdded,
+          onFriendApplicationDeleted: friendApplicationDeleted,
+          onFriendApplicationRejected: friendApplicationRejected,
+          onFriendInfoChanged: friendInfoChanged,
+          onFriendAdded: friendAdded,
+          onFriendDeleted: friendDeleted,
+        ))
+        ..conversationManager.setConversationListener(OnConversationListener(
+            onConversationChanged: conversationChanged,
+            onNewConversation: newConversation,
+            onTotalUnreadMessageCountChanged: totalUnreadMsgCountChanged,
+            onInputStatusChanged: inputStateChanged,
+            onSyncServerFailed: (reInstall) {
+              imSdkStatus(IMSdkStatus.syncFailed,
+                  reInstall: reInstall ?? false);
+            },
+            onSyncServerFinish: (reInstall) {
+              imSdkStatus(IMSdkStatus.syncEnded, reInstall: reInstall ?? false);
+            },
+            onSyncServerStart: (reInstall) {
+              imSdkStatus(IMSdkStatus.syncStart, reInstall: reInstall ?? false);
+            },
+            onSyncServerProgress: (progress) {
+              imSdkStatus(IMSdkStatus.syncProgress, progress: progress);
+            }))
+        ..groupManager.setGroupListener(OnGroupListener(
+          onGroupApplicationAccepted: groupApplicationAccepted,
+          onGroupApplicationAdded: groupApplicationAdded,
+          onGroupApplicationDeleted: groupApplicationDeleted,
+          onGroupApplicationRejected: groupApplicationRejected,
+          onGroupInfoChanged: groupInfoChanged,
+          onGroupMemberAdded: groupMemberAdded,
+          onGroupMemberDeleted: groupMemberDeleted,
+          onGroupMemberInfoChanged: groupMemberInfoChanged,
+          onJoinedGroupAdded: joinedGroupAdded,
+          onJoinedGroupDeleted: joinedGroupDeleted,
+        ));
 
-    Logger().sdkIsInited = initialized;
-    initializedSubject.sink.add(initialized);
+      Logger().sdkIsInited = initialized;
+      _isInitialized = initialized == true;
+      if (_isInitialized) {
+        initializedSubject.sink.add(true);
+      } else {
+        Get.find<NetworkRouteController>().state.value =
+            NetworkRouteState.unavailable;
+      }
+    } catch (error, stackTrace) {
+      Logger.print('OpenIM init failed: $error\n$stackTrace');
+      Get.find<NetworkRouteController>().state.value =
+          NetworkRouteState.unavailable;
+    } finally {
+      _isInitializing = false;
+    }
   }
 
   Future login(String userID, String token) async {
@@ -195,6 +219,7 @@ class IMController extends GetxController with IMCallback, OpenIMLive {
         val?.allowAddFriend = data.allowAddFriend;
         val?.allowBeep = data.allowBeep;
         val?.allowVibration = data.allowVibration;
+        val?.globalRecvMsgOpt = data.globalRecvMsgOpt;
         val?.nickname = data.nickname;
         val?.faceURL = data.faceURL;
         val?.phoneNumber = data.phoneNumber;
@@ -205,7 +230,7 @@ class IMController extends GetxController with IMCallback, OpenIMLive {
     }
   }
 
-  _handleLoginRepeatError(e) async {
+  Future<void> _handleLoginRepeatError(Object e) async {
     if (e is PlatformException && (e.code == "13002" || e.code == '1507')) {
       await logout();
       await DataSp.removeLoginCertificate();

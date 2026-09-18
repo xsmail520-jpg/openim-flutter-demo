@@ -18,13 +18,24 @@ class VerifyPhonePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            sprintf(StrRes.enterVerificationCode, [logic.email?.isNotEmpty == true ? StrRes.email : StrRes.phoneNumber])
-                .toText
-              ..style = Styles.ts_0089FF_22sp_semibold,
-            10.verticalSpace,
-            '${logic.account} ${sprintf(StrRes.defaultVerificationCode, ['666666'])}'.toText
-              ..style = Styles.ts_8E9AB0_12sp,
-            35.verticalSpace,
+            RegisterPageTitle(
+              sprintf(
+                StrRes.enterVerificationCode,
+                [
+                  logic.email?.isNotEmpty == true
+                      ? StrRes.email
+                      : StrRes.phoneNumber,
+                ],
+              ),
+            ),
+            12.verticalSpace,
+            Text(
+              '${logic.account} ${sprintf(StrRes.defaultVerificationCode, [
+                    '666666'
+                  ])}',
+              style: Styles.ts_8E9AB0_12sp.copyWith(height: 1.5),
+            ),
+            28.verticalSpace,
             PinCodeTextField(
               appContext: context,
               controller: logic.codeEditCtrl,
@@ -43,15 +54,16 @@ class VerifyPhonePage extends StatelessWidget {
                 selectedColor: Styles.c_0089FF,
                 inactiveColor: Styles.c_E8EAEF,
                 disabledColor: Styles.c_E8EAEF,
-                activeFillColor: Styles.c_E8EAEF,
-                selectedFillColor: Styles.c_E8EAEF,
-                inactiveFillColor: Styles.c_E8EAEF,
-                borderRadius: BorderRadius.circular(8.r),
+                activeFillColor: Styles.surface,
+                selectedFillColor: Styles.primaryContainer,
+                inactiveFillColor: Styles.surface,
+                borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
                 borderWidth: 1,
-                fieldHeight: 42.w,
-                fieldWidth: 42.h,
+                fieldHeight: Styles.controlHeight.h,
+                fieldWidth: Styles.controlHeight.w,
               ),
-              cursorColor: Colors.black,
+              enableActiveFill: true,
+              cursorColor: Styles.primary,
               animationDuration: 300.milliseconds,
               errorAnimationController: logic.codeErrorCtrl,
               keyboardType: TextInputType.number,
@@ -70,7 +82,7 @@ class VerifyPhonePage extends StatelessWidget {
               sec: 300,
               onTapCallback: () => logic.requestVerificationCode(),
             ),
-            170.verticalSpace,
+            48.verticalSpace,
             Obx(() => Button(
                   text: StrRes.nextStep,
                   enabled: logic.enabled.value,

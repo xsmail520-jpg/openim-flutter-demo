@@ -13,6 +13,7 @@ class NoVideoWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
         alignment: Alignment.center,
+        color: Styles.ink,
         child: LayoutBuilder(
           builder: (ctx, constraints) => Icon(
             EvaIcons.videoOffOutline,
@@ -25,7 +26,8 @@ class NoVideoWidget extends StatelessWidget {
 
 class NoVideoAvatarWidget extends StatelessWidget {
   //
-  const NoVideoAvatarWidget({Key? key, this.faceURL, this.name}) : super(key: key);
+  const NoVideoAvatarWidget({Key? key, this.faceURL, this.name})
+      : super(key: key);
   final String? faceURL;
   final String? name;
   //
@@ -34,10 +36,13 @@ class NoVideoAvatarWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       alignment: Alignment.center,
-      color: Colors.grey,
+      color: Styles.ink,
       child: null != faceURL && LiveUtils.isURL(faceURL!)
           ? ImageUtil.networkImage(
-              url: faceURL!, fit: BoxFit.cover, height: MediaQuery.of(context).size.width.h / 2, width: MediaQuery.of(context).size.width.h / 2)
+              url: faceURL!,
+              fit: BoxFit.cover,
+              height: MediaQuery.of(context).size.width.h / 2,
+              width: MediaQuery.of(context).size.width.h / 2)
           : AvatarView(
               url: faceURL,
               text: name,

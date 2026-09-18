@@ -15,8 +15,41 @@ const appID = 'your-app-id';
 const appKey = 'your-app-key';
 const appSecret = 'your-app-secret';
 
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  try {
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform);
+    }
+  } catch (_) {
+    // Android will still display notification payloads through the system
+    // tray; data-only handling is best-effort when Firebase is unavailable.
+  }
+}
+
 class PushController extends GetxService {
-  PushType pushType = PushType.none;
+  PushType pushType =
+      Platform.isAndroid || Platform.isIOS ? PushType.FCM : PushType.none;
+  static void Function(Map<String, dynamic> data)? _onForegroundMessage;
+  static void Function(Map<String, dynamic> data)? _onNotificationOpened;
+
+  static void configure({
+    void Function(Map<String, dynamic> data)? onForegroundMessage,
+    void Function(Map<String, dynamic> data)? onNotificationOpened,
+  }) {
+    _onForegroundMessage = onForegroundMessage;
+    _onNotificationOpened = onNotificationOpened;
+  }
+
+  static Future<void> initialize() async {
+    if (PushController().pushType != PushType.FCM) return;
+    try {
+      await FCMPushController()._initialize();
+    } catch (e) {
+      Logger.print('FCM initialization unavailable: $e');
+    }
+  }
 
   /// Logs in the user with the specified alias to the push notification service.
   ///
@@ -35,13 +68,18 @@ class PushController extends GetxService {
   ///   - alias: The alias to bind to the push notification service for getui.
   ///   - onTokenRefresh: A callback function that is invoked with the refreshed
   ///     token when using FCM. Required if the push type is FCM.
-  static void login(String alias, {void Function(String token)? onTokenRefresh}) {
+  static void login(String alias,
+      {void Function(String token)? onTokenRefresh}) {
     if (PushController().pushType == PushType.FCM) {
-      assert((PushController().pushType == PushType.FCM && onTokenRefresh != null));
-
-      FCMPushController()._initialize().then((_) {
-        FCMPushController()._getToken().then((token) => onTokenRefresh!(token));
-        FCMPushController()._listenToTokenRefresh((token) => onTokenRefresh);
+      initialize().then((_) async {
+        try {
+          final token = await FCMPushController()._getToken();
+          onTokenRefresh?.call(token);
+          FCMPushController()
+              ._listenToTokenRefresh((token) => onTokenRefresh?.call(token));
+        } catch (e) {
+          Logger.print('FCM token unavailable: $e');
+        }
       });
     }
   }
@@ -59,56 +97,72 @@ class FCMPushController {
 
   FCMPushController._internal();
 
+  bool _firebaseReady = false;
+  bool _listenersConfigured = false;
+
   Future<void> _initialize() async {
-    GooglePlayServicesAvailability? availability = GooglePlayServicesAvailability.success;
+    GooglePlayServicesAvailability? availability =
+        GooglePlayServicesAvailability.success;
     if (Platform.isAndroid) {
-      availability = await GoogleApiAvailability.instance.checkGooglePlayServicesAvailability();
+      availability = await GoogleApiAvailability.instance
+          .checkGooglePlayServicesAvailability();
     }
-    if (availability != GooglePlayServicesAvailability.serviceInvalid) {
-      await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-    } else {
+    if (availability == GooglePlayServicesAvailability.serviceInvalid) {
       Logger.print('Google Play Services are not available');
       return;
     }
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform);
+    }
+    _firebaseReady = true;
 
     await _requestPermission();
 
-    _configureForegroundNotification();
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
-    _configureBackgroundNotification();
+    if (!_listenersConfigured) {
+      _configureForegroundNotification();
+      _configureBackgroundNotification();
+      _listenersConfigured = true;
+    }
 
     return;
   }
 
   Future<void> _requestPermission() async {
-    NotificationSettings settings = await FirebaseMessaging.instance.requestPermission();
+    NotificationSettings settings =
+        await FirebaseMessaging.instance.requestPermission();
     print('User granted permission: ${settings.authorizationStatus}');
   }
 
   void _configureForegroundNotification() {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
-      print('Foreground notification received: ${message.notification?.title}');
-
-      if (message.notification != null) {}
+      final data = Map<String, dynamic>.from(message.data);
+      data['title'] ??= message.notification?.title;
+      data['body'] ??= message.notification?.body;
+      PushController._onForegroundMessage?.call(data);
     });
   }
 
   void _configureBackgroundNotification() {
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('App opened from background: ${message.notification?.title}');
+      PushController._onNotificationOpened
+          ?.call(Map<String, dynamic>.from(message.data));
     });
 
-    FirebaseMessaging.instance.getInitialMessage().then((RemoteMessage? message) {
+    FirebaseMessaging.instance
+        .getInitialMessage()
+        .then((RemoteMessage? message) {
       if (message != null) {
-        print('App opened from terminated state: ${message.notification?.title}');
+        PushController._onNotificationOpened
+            ?.call(Map<String, dynamic>.from(message.data));
       }
     });
   }
 
   Future<String> _getToken() async {
     final token = await FirebaseMessaging.instance.getToken();
-    Logger.print("FCM Token: $token");
-
     if (token == null) {
       throw Exception('FCM Token is null');
     }
@@ -117,12 +171,13 @@ class FCMPushController {
   }
 
   Future<void> _deleteToken() {
+    if (!_firebaseReady) return Future.value();
     return FirebaseMessaging.instance.deleteToken();
   }
 
   void _listenToTokenRefresh(void Function(String token) onTokenRefresh) {
     FirebaseMessaging.instance.onTokenRefresh.listen((String newToken) {
-      print("FCM Token refreshed: $newToken");
+      Logger.print('FCM token refreshed');
       onTokenRefresh(newToken);
     });
   }

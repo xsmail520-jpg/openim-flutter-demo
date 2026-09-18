@@ -12,6 +12,8 @@ import '../pages/chat/group_setup/group_member_list/group_member_list_binding.da
 import '../pages/chat/group_setup/group_member_list/group_member_list_view.dart';
 import '../pages/chat/group_setup/group_qrcode/group_qrcode_binding.dart';
 import '../pages/chat/group_setup/group_qrcode/group_qrcode_view.dart';
+import '../pages/chat/group_setup/search_group_member/search_group_member_binding.dart';
+import '../pages/chat/group_setup/search_group_member/search_group_member_view.dart';
 import '../pages/chat/group_setup/group_setup_binding.dart';
 import '../pages/chat/group_setup/group_setup_view.dart';
 import '../pages/contacts/add_by_search/add_by_search_binding.dart';
@@ -68,10 +70,19 @@ import '../pages/mine/account_setup/account_setup_binding.dart';
 import '../pages/mine/account_setup/account_setup_view.dart';
 import '../pages/mine/blacklist/blacklist_binding.dart';
 import '../pages/mine/blacklist/blacklist_view.dart';
+import '../pages/mine/business_center/business_center_view.dart';
+import '../pages/mine/change_password/change_password_view.dart';
+import '../pages/mine/my_qrcode/my_qrcode_view.dart';
+import '../pages/mine/notification_settings/notification_settings_view.dart';
+import '../pages/mine/privacy_security/privacy_security_view.dart';
+import '../pages/mine/security/security_view.dart';
+import '../pages/mine/edit_my_info/edit_my_info_binding.dart';
+import '../pages/mine/edit_my_info/edit_my_info_view.dart';
 import '../pages/mine/language_setup/language_setup_binding.dart';
 import '../pages/mine/language_setup/language_setup_view.dart';
 import '../pages/mine/my_info/my_info_binding.dart';
 import '../pages/mine/my_info/my_info_view.dart';
+import '../pages/mine/storage_usage/storage_usage_view.dart';
 import '../pages/register/register_binding.dart';
 import '../pages/register/register_view.dart';
 import '../pages/register/set_password/set_password_binding.dart';
@@ -117,6 +128,34 @@ class AppPages {
       name: AppRoutes.home,
       page: () => HomePage(),
       binding: HomeBinding(),
+    ),
+    _pageBuilder(
+      name: AppRoutes.businessCenter,
+      page: () => const BusinessCenterPage(),
+    ),
+    _pageBuilder(
+      name: AppRoutes.myQrcode,
+      page: () => const MyQrCodePage(),
+    ),
+    _pageBuilder(
+      name: AppRoutes.changePassword,
+      page: () => const ChangePasswordPage(),
+    ),
+    _pageBuilder(
+      name: AppRoutes.privacySecurity,
+      page: () => const PrivacySecurityPage(),
+    ),
+    _pageBuilder(
+      name: AppRoutes.notificationSettings,
+      page: () => const NotificationSettingsPage(),
+    ),
+    _pageBuilder(
+      name: AppRoutes.storageUsage,
+      page: () => const StorageUsagePage(),
+    ),
+    _pageBuilder(
+      name: AppRoutes.security,
+      page: () => const SecurityPage(),
     ),
     _pageBuilder(
       name: AppRoutes.chat,
@@ -176,6 +215,11 @@ class AppPages {
       binding: MyInfoBinding(),
     ),
     _pageBuilder(
+      name: AppRoutes.editMyInfo,
+      page: () => EditMyInfoPage(),
+      binding: EditMyInfoBinding(),
+    ),
+    _pageBuilder(
       name: AppRoutes.accountSetup,
       page: () => AccountSetupPage(),
       binding: AccountSetupBinding(),
@@ -214,6 +258,11 @@ class AppPages {
       name: AppRoutes.groupMemberList,
       page: () => GroupMemberListPage(),
       binding: GroupMemberListBinding(),
+    ),
+    _pageBuilder(
+      name: AppRoutes.searchGroupMember,
+      page: () => SearchGroupMemberPage(),
+      binding: SearchGroupMemberBinding(),
     ),
     _pageBuilder(
       name: AppRoutes.groupQrcode,
@@ -260,6 +309,14 @@ class AppPages {
       page: () => SelectContactsFromFriendsPage(),
       binding: SelectContactsFromFriendsBinding(),
     ),
+    // The old tag selector has no backed tag data model in this app build.
+    // Keep the legacy entry usable with the same multi-select result contract
+    // instead of letting it fall through to GetX's not-found page.
+    _pageBuilder(
+      name: AppRoutes.selectContactsFromTag,
+      page: () => SelectContactsFromFriendsPage(),
+      binding: SelectContactsFromFriendsBinding(),
+    ),
     _pageBuilder(
       name: AppRoutes.selectContactsFromGroup,
       page: () => SelectContactsFromGroupPage(),
@@ -277,6 +334,11 @@ class AppPages {
     ),
     _pageBuilder(
       name: AppRoutes.globalSearch,
+      page: () => GlobalSearchPage(),
+      binding: GlobalSearchBinding(),
+    ),
+    _pageBuilder(
+      name: AppRoutes.expandChatHistory,
       page: () => GlobalSearchPage(),
       binding: GlobalSearchBinding(),
     ),

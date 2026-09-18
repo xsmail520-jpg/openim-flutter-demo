@@ -90,35 +90,40 @@ class _RichTextInputBoxState extends State<RichTextInputBox> {
             spacing: 22.w,
             children: [
               if (widget.showAlbumIcon)
-                ImageRes.toolboxAlbum1.toImage
-                  ..width = 26.w
-                  ..height = 22.h
-                  ..opacity = _opacity
-                  ..onTap = widget.onTapAlbum,
+                _buildToolButton(
+                  icon: ImageRes.toolboxAlbum1.toImage
+                    ..width = 26.w
+                    ..height = 22.h,
+                  onTap: widget.onTapAlbum,
+                ),
               if (widget.showCameraIcon)
-                ImageRes.toolboxCamera1.toImage
-                  ..width = 26.w
-                  ..height = 22.h
-                  ..opacity = _opacity
-                  ..onTap = widget.onTapCamera,
+                _buildToolButton(
+                  icon: ImageRes.toolboxCamera1.toImage
+                    ..width = 26.w
+                    ..height = 22.h,
+                  onTap: widget.onTapCamera,
+                ),
               if (widget.showFileIcon)
-                ImageRes.toolboxFile1.toImage
-                  ..width = 26.w
-                  ..height = 22.h
-                  ..opacity = _opacity
-                  ..onTap = widget.onTapFile,
+                _buildToolButton(
+                  icon: ImageRes.toolboxFile1.toImage
+                    ..width = 26.w
+                    ..height = 22.h,
+                  onTap: widget.onTapFile,
+                ),
               if (widget.showCardIcon)
-                ImageRes.toolboxCard1.toImage
-                  ..width = 26.w
-                  ..height = 22.h
-                  ..opacity = _opacity
-                  ..onTap = widget.onTapCard,
+                _buildToolButton(
+                  icon: ImageRes.toolboxCard1.toImage
+                    ..width = 26.w
+                    ..height = 22.h,
+                  onTap: widget.onTapCard,
+                ),
               if (widget.showLocationIcon)
-                ImageRes.toolboxLocation1.toImage
-                  ..width = 16.w
-                  ..height = 22.h
-                  ..opacity = _opacity
-                  ..onTap = widget.onTapLocation,
+                _buildToolButton(
+                  icon: ImageRes.toolboxLocation1.toImage
+                    ..width = 16.w
+                    ..height = 22.h,
+                  onTap: widget.onTapLocation,
+                ),
             ],
           ),
           if (widget.showAlbumIcon ||
@@ -129,12 +134,14 @@ class _RichTextInputBoxState extends State<RichTextInputBox> {
             15.verticalSpace,
           Row(
             children: [
-              (_leftKeyboardButton
-                  ? (ImageRes.openKeyboard.toImage..onTap = onTapLeftKeyboard)
-                  : (ImageRes.openVoice.toImage..onTap = onTapSpeak))
-                ..width = 32.w
-                ..height = 32.h
-                ..opacity = _opacity,
+              _buildToolButton(
+                icon: (_leftKeyboardButton
+                    ? ImageRes.openKeyboard.toImage
+                    : ImageRes.openVoice.toImage)
+                  ..width = 32.w
+                  ..height = 32.h,
+                onTap: _leftKeyboardButton ? onTapLeftKeyboard : onTapSpeak,
+              ),
               12.horizontalSpace,
               Expanded(
                 child: Stack(
@@ -156,7 +163,7 @@ class _RichTextInputBoxState extends State<RichTextInputBox> {
                   width: 78.w,
                   child: Button(
                     text: StrRes.send,
-                    height: 36.h,
+                    height: Styles.controlHeight,
                     enabled: widget.enabled,
                     onTap: widget.onSend,
                   ),
@@ -167,6 +174,26 @@ class _RichTextInputBoxState extends State<RichTextInputBox> {
       ),
     );
   }
+
+  Widget _buildToolButton({
+    required Widget icon,
+    VoidCallback? onTap,
+  }) =>
+      Semantics(
+        button: true,
+        enabled: widget.enabled && onTap != null,
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: widget.enabled ? onTap : null,
+          child: SizedBox(
+            width: Styles.controlHeight,
+            height: Styles.controlHeight,
+            child: Center(
+              child: Opacity(opacity: _opacity, child: icon),
+            ),
+          ),
+        ),
+      );
 
   Widget get _textFiled => Container(
         decoration: BoxDecoration(

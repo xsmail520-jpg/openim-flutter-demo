@@ -13,11 +13,13 @@ class RegisterLogic extends GetxController {
   final areaCode = "+86".obs;
   final enabled = false.obs;
   final loginController = Get.find<LoginLogic>();
-  String? get email => loginController.operateType == LoginType.email ? phoneCtrl.text.trim() : null;
-  String? get phone =>
-      (loginController.operateType == LoginType.phone || loginController.operateType == LoginType.account)
-          ? phoneCtrl.text.trim()
-          : null;
+  String? get email => loginController.operateType == LoginType.email
+      ? phoneCtrl.text.trim()
+      : null;
+  String? get phone => (loginController.operateType == LoginType.phone ||
+          loginController.operateType == LoginType.account)
+      ? phoneCtrl.text.trim()
+      : null;
 
   @override
   void onClose() {
@@ -35,12 +37,22 @@ class RegisterLogic extends GetxController {
 
   _onChanged() {
     enabled.value = needInvitationCodeRegister
-        ? phoneCtrl.text.trim().isNotEmpty && invitationCodeCtrl.text.trim().isNotEmpty
+        ? phoneCtrl.text.trim().isNotEmpty &&
+            invitationCodeCtrl.text.trim().isNotEmpty
         : phoneCtrl.text.trim().isNotEmpty;
   }
 
   bool get needInvitationCodeRegister =>
       /*null != appLogic.clientConfigMap['needInvitationCodeRegister'] && appLogic.clientConfigMap['needInvitationCodeRegister'] != '0'*/ false;
+
+  bool get showInvitationCodeRegister => true;
+
+  bool get needVerificationCodeRegister {
+    final value = appLogic.clientConfigMap['needVerificationCodeRegister'];
+    if (value == null) return true;
+    return !{'0', 'false', 'no', 'off'}
+        .contains(value.toString().trim().toLowerCase());
+  }
 
   String? get invitationCode => IMUtils.emptyStrToNull(invitationCodeCtrl.text);
 
@@ -58,16 +70,32 @@ class RegisterLogic extends GetxController {
       );
 
   void next() async {
-    if ((loginController.operateType == LoginType.phone || loginController.operateType == LoginType.account) &&
+    if ((loginController.operateType == LoginType.phone ||
+            loginController.operateType == LoginType.account) &&
         !IMUtils.isMobile(areaCode.value, phoneCtrl.text)) {
       IMViews.showToast(StrRes.plsEnterRightPhone);
       return;
     }
 
-    if (loginController.operateType == LoginType.email && !phoneCtrl.text.isEmail) {
+    if (loginController.operateType == LoginType.email &&
+        !phoneCtrl.text.isEmail) {
       IMViews.showToast(StrRes.plsEnterRightEmail);
       return;
     }
+
+    await appLogic.queryClientConfig();
+    if (!needVerificationCodeRegister) {
+      AppNavigator.startSetPassword(
+        areaCode: areaCode.value,
+        phoneNumber: phone,
+        email: email,
+        usedFor: 1,
+        verificationCode: '',
+        invitationCode: invitationCode,
+      );
+      return;
+    }
+
     final success = await LoadingView.singleton.wrap(
       asyncFunction: () => requestVerificationCode(),
     );

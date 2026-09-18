@@ -61,12 +61,16 @@ class _SearchBoxState extends State<SearchBox> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: widget.height ?? 36.h,
+      height: widget.height ?? Styles.controlHeight.h,
       margin: widget.margin,
-      padding: widget.padding ?? EdgeInsets.symmetric(horizontal: 14.w),
+      padding: widget.padding ?? EdgeInsets.only(left: 12.w),
       decoration: BoxDecoration(
-        color: widget.backgroundColor ?? Styles.c_8E9AB0_opacity15,
-        borderRadius: BorderRadius.circular(6.r),
+        color: widget.backgroundColor ?? Styles.background,
+        border: Border.all(
+          color: Styles.divider,
+          width: Styles.dividerWidth,
+        ),
+        borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
       ),
       child: Row(
         children: [
@@ -86,9 +90,12 @@ class _SearchBoxState extends State<SearchBox> {
               decoration: InputDecoration(
                 hintText: widget.hintText ?? StrRes.search,
                 hintStyle: widget.hintStyle ?? Styles.ts_8E9AB0_17sp,
+                filled: false,
                 isDense: true,
                 contentPadding: EdgeInsets.zero,
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
               ),
               onSubmitted: widget.onSubmitted,
               onChanged: widget.onChanged,
@@ -102,16 +109,22 @@ class _SearchBoxState extends State<SearchBox> {
 
   Widget get _clearBtn => Visibility(
         visible: _showClearBtn,
-        child: GestureDetector(
-          onTap: () {
-            widget.controller?.clear();
-            widget.onCleared?.call();
-          },
-          behavior: HitTestBehavior.translucent,
-          child: ImageRes.clearText.toImage
-            ..width = widget.searchIconWidth ?? 24.w
-            ..height = widget.searchIconHeight ?? 24.h
-            ..color = widget.searchIconColor,
+        child: SizedBox(
+          width: Styles.controlHeight,
+          height: Styles.controlHeight,
+          child: GestureDetector(
+            onTap: () {
+              widget.controller?.clear();
+              widget.onCleared?.call();
+            },
+            behavior: HitTestBehavior.translucent,
+            child: Center(
+              child: ImageRes.clearText.toImage
+                ..width = widget.searchIconWidth ?? 20.w
+                ..height = widget.searchIconHeight ?? 20.h
+                ..color = widget.searchIconColor,
+            ),
+          ),
         ),
       );
 }

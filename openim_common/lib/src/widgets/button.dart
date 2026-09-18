@@ -36,21 +36,28 @@ class Button extends StatelessWidget {
       child: Material(
         type: MaterialType.transparency,
         child: Ink(
-          height: height ?? 44.h,
+          height: height ?? Styles.controlHeight,
           decoration: BoxDecoration(
-            color: enabled ? enabledColor ?? Styles.c_0089FF : disabledColor ?? Styles.c_0089FF_opacity50,
-            borderRadius: BorderRadius.circular(radius ?? 4.r),
+            color: enabled
+                ? enabledColor ?? Styles.primary
+                : disabledColor ?? Styles.divider,
+            borderRadius: BorderRadius.circular(radius ?? Styles.radiusSmall.r),
           ),
           child: InkWell(
             onTap: enabled ? onTap : null,
-            borderRadius: BorderRadius.circular(radius ?? 4.r),
+            splashColor: Styles.surface.withValues(alpha: .1),
+            highlightColor: Styles.primaryPressed.withValues(alpha: .16),
+            borderRadius: BorderRadius.circular(radius ?? Styles.radiusSmall.r),
             child: Container(
               alignment: Alignment.center,
               padding: padding,
               child: Text(
                 text,
-                style: textStyle ?? Styles.ts_FFFFFF_17sp_semibold,
+                style: enabled
+                    ? textStyle ?? Styles.ts_FFFFFF_17sp_semibold
+                    : disabledTextStyle ?? Styles.ts_8E9AB0_17sp,
                 maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ),
@@ -95,13 +102,19 @@ class ImageTextButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Material(
       child: Ink(
-        height: height ?? 46.h,
+        height: height ?? Styles.controlHeight,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(6.r),
+          borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
           color: color,
+          border: Border.all(
+            color:
+                color == Styles.surface ? Styles.divider : Colors.transparent,
+            width: Styles.dividerWidth,
+          ),
         ),
         child: InkWell(
           onTap: onTap,
+          borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [

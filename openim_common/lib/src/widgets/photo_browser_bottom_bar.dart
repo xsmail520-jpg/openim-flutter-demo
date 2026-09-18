@@ -14,7 +14,9 @@ class PhotoBrowserBottomBar extends StatelessWidget {
   bool? onlySave;
 
   PhotoBrowserBottomBar.show(BuildContext context,
-      {super.key, bool onlySave = false, ValueChanged<OperateType>? onPressedButton}) {
+      {super.key,
+      bool onlySave = false,
+      ValueChanged<OperateType>? onPressedButton}) {
     showModalBottomSheet(
         isScrollControlled: true,
         backgroundColor: Colors.transparent,
@@ -48,7 +50,8 @@ class PhotoBrowserBottomBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               if (onlySave == false)
-                _buildItem(ImageRes.forwardIcon.toImage, StrRes.menuForward, onPressed: () {
+                _buildItem(ImageRes.forwardIcon.toImage, StrRes.menuForward,
+                    onPressed: () {
                   Navigator.of(context).pop();
                   onPressedButton?.call(OperateType.forward);
                 }),
@@ -66,10 +69,14 @@ class PhotoBrowserBottomBar extends StatelessWidget {
             height: 6.h,
           ),
           ConstrainedBox(
-            constraints: BoxConstraints(minWidth: MediaQuery.of(context).size.width, maxHeight: 40.h),
+            constraints: BoxConstraints(
+              minWidth: MediaQuery.of(context).size.width,
+              minHeight: Styles.controlHeight,
+              maxHeight: Styles.controlHeight,
+            ),
             child: CupertinoButton(
                 padding: EdgeInsets.zero,
-                minSize: 40.h,
+                minSize: Styles.controlHeight,
                 child: Text(StrRes.cancel, style: Styles.ts_0C1C33_12sp),
                 onPressed: () {
                   Navigator.of(context).pop();
@@ -85,7 +92,9 @@ class PhotoBrowserBottomBar extends StatelessWidget {
       CupertinoButton(
           padding: EdgeInsets.only(top: 16, bottom: 8),
           child: Container(
-            decoration: BoxDecoration(color: CupertinoColors.white, borderRadius: BorderRadius.all(Radius.circular(5))),
+            decoration: BoxDecoration(
+                color: CupertinoColors.white,
+                borderRadius: BorderRadius.all(Radius.circular(5))),
             height: 48,
             width: 48,
             child: Center(child: icon),

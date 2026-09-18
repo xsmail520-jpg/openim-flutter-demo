@@ -34,10 +34,14 @@ class GroupMemberListLogic extends GetxController {
   late StreamSubscription mISub;
 
   bool get isMultiSelMode =>
-      opType == GroupMemberOpType.call || opType == GroupMemberOpType.at || opType == GroupMemberOpType.del;
+      opType == GroupMemberOpType.call ||
+      opType == GroupMemberOpType.at ||
+      opType == GroupMemberOpType.del;
 
   bool get excludeSelfFromList =>
-      opType == GroupMemberOpType.call || opType == GroupMemberOpType.at || opType == GroupMemberOpType.transferRight;
+      opType == GroupMemberOpType.call ||
+      opType == GroupMemberOpType.at ||
+      opType == GroupMemberOpType.transferRight;
 
   bool get isDelMember => opType == GroupMemberOpType.del;
 
@@ -124,7 +128,8 @@ class GroupMemberListLogic extends GetxController {
     }
   }
 
-  bool isChecked(GroupMembersInfo membersInfo) => checkedList.contains(membersInfo);
+  bool isChecked(GroupMembersInfo membersInfo) =>
+      checkedList.contains(membersInfo);
 
   clickMember(GroupMembersInfo membersInfo) async {
     if (opType == GroupMemberOpType.transferRight) {
@@ -155,7 +160,8 @@ class GroupMemberListLogic extends GetxController {
     checkedList.remove(membersInfo);
   }
 
-  viewMemberInfo(GroupMembersInfo membersInfo) => AppNavigator.startUserProfilePane(
+  viewMemberInfo(GroupMembersInfo membersInfo) =>
+      AppNavigator.startUserProfilePane(
         userID: membersInfo.userID!,
         groupID: membersInfo.groupID,
         nickname: membersInfo.nickname,
@@ -185,7 +191,9 @@ class GroupMemberListLogic extends GetxController {
     final memberInfo = await AppNavigator.startSearchGroupMember(
       groupInfo: groupInfo,
       opType: opType,
+      currentUserRole: myGroupMemberLevel.value,
     );
+    if (memberInfo is! GroupMembersInfo) return;
     if (opType == GroupMemberOpType.transferRight) {
       Get.back(result: memberInfo);
     } else if (isMultiSelMode) {

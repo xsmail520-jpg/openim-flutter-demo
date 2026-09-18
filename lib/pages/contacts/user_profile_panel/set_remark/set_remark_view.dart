@@ -16,19 +16,34 @@ class SetFriendRemarkPage extends StatelessWidget {
     return Scaffold(
       appBar: TitleBar.back(
         title: StrRes.remark,
-        right: StrRes.save.toText
-          ..style = Styles.ts_0C1C33_17sp
-          ..onTap = logic.save,
+        showUnderline: true,
+        right: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: logic.save,
+          child: SizedBox(
+            width: 44.w,
+            height: 44.h,
+            child: Center(
+              child: StrRes.save.toText..style = Styles.ts_0089FF_17sp_semibold,
+            ),
+          ),
+        ),
       ),
-      backgroundColor: Styles.c_FFFFFF,
-      body: Column(
-        children: [
-          22.verticalSpace,
-          Container(
-            margin: EdgeInsets.symmetric(horizontal: 10.w),
+      backgroundColor: Styles.background,
+      body: SafeArea(
+        top: false,
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: Container(
+            height: 48.h,
+            margin: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 0),
             decoration: BoxDecoration(
-              color: Styles.c_E8EAEF,
-              borderRadius: BorderRadius.circular(4.r),
+              color: Styles.surface,
+              border: Border.all(
+                color: Styles.divider,
+                width: Styles.dividerWidth,
+              ),
+              borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
             ),
             child: TextField(
               controller: logic.inputCtrl,
@@ -37,15 +52,18 @@ class SetFriendRemarkPage extends StatelessWidget {
               inputFormatters: [LengthLimitingTextInputFormatter(16)],
               decoration: InputDecoration(
                 border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                filled: false,
                 isDense: true,
                 contentPadding: EdgeInsets.symmetric(
-                  vertical: 10.h,
-                  horizontal: 12.w,
+                  vertical: 12.h,
+                  horizontal: 14.w,
                 ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }

@@ -6,29 +6,66 @@ class ChatToolBox extends StatelessWidget {
   const ChatToolBox({
     super.key,
     this.onTapAlbum,
+    this.onTapCamera,
+    this.onTapEmoji,
     this.onTapCall,
+    this.onTapVoice,
+    this.onTapFavorite,
   });
   final Function()? onTapAlbum;
+  final Function()? onTapCamera;
+  final Function()? onTapEmoji;
   final Function()? onTapCall;
+  final Function()? onTapVoice;
+  final Function()? onTapFavorite;
 
+  /// 统一聊天附件入口的图标、尺寸和权限触发方式。
   @override
   Widget build(BuildContext context) {
     final items = [
       ToolboxItemInfo(
         text: StrRes.toolboxAlbum,
-        icon: ImageRes.toolboxAlbum,
+        icon: Icons.photo_outlined,
         onTap: () => Permissions.photos(onTapAlbum),
+      ),
+      ToolboxItemInfo(
+        text: StrRes.toolboxCamera,
+        icon: Icons.camera_alt_outlined,
+        onTap: () => Permissions.camera(onTapCamera),
+      ),
+      ToolboxItemInfo(
+        text: StrRes.toolboxEmoji,
+        icon: Icons.emoji_emotions_outlined,
+        onTap: onTapEmoji,
+      ),
+      ToolboxItemInfo(
+        text: StrRes.toolboxVoice,
+        icon: Icons.mic_none_rounded,
+        onTap: () => Permissions.microphone(onTapVoice),
+      ),
+      ToolboxItemInfo(
+        text: StrRes.favorite,
+        icon: Icons.star_border_rounded,
+        onTap: onTapFavorite,
       ),
       if (onTapCall != null)
         ToolboxItemInfo(
           text: StrRes.toolboxCall,
-          icon: ImageRes.toolboxCall,
+          icon: Icons.call_outlined,
           onTap: () => Permissions.cameraAndMicrophone(onTapCall),
         ),
     ];
 
     return Container(
-      color: Styles.c_F0F2F6,
+      decoration: const BoxDecoration(
+        color: Styles.background,
+        border: Border(
+          top: BorderSide(
+            color: Styles.divider,
+            width: Styles.dividerWidth,
+          ),
+        ),
+      ),
       height: 224.h,
       child: GridView.builder(
         itemCount: items.length,
@@ -58,15 +95,27 @@ class ChatToolBox extends StatelessWidget {
 
   Widget _buildItemView({
     required String text,
-    required String icon,
+    required IconData icon,
     Function()? onTap,
   }) =>
       Column(
         children: [
-          icon.toImage
-            ..width = 58.w
-            ..height = 58.h
-            ..onTap = onTap,
+          Material(
+            color: Styles.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12.r),
+              side: const BorderSide(color: Styles.divider),
+            ),
+            child: InkWell(
+              onTap: onTap,
+              borderRadius: BorderRadius.circular(12.r),
+              child: SizedBox(
+                width: 58.w,
+                height: 58.h,
+                child: Icon(icon, size: 28.w, color: Styles.primary),
+              ),
+            ),
+          ),
           10.verticalSpace,
           text.toText..style = Styles.ts_0C1C33_12sp,
         ],
@@ -74,9 +123,9 @@ class ChatToolBox extends StatelessWidget {
 }
 
 class ToolboxItemInfo {
-  String text;
-  String icon;
-  Function()? onTap;
+  final String text;
+  final IconData icon;
+  final Function()? onTap;
 
   ToolboxItemInfo({required this.text, required this.icon, this.onTap});
 }

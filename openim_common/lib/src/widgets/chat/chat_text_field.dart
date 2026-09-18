@@ -28,7 +28,7 @@ class ChatTextField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ExtendedTextField(
-      style: style,
+      style: style ?? Styles.ts_0C1C33_17sp,
       focusNode: focusNode,
       controller: controller,
       keyboardType: TextInputType.multiline,
@@ -39,6 +39,9 @@ class ChatTextField extends StatelessWidget {
       textAlign: textAlign,
       decoration: InputDecoration(
         border: InputBorder.none,
+        enabledBorder: InputBorder.none,
+        focusedBorder: InputBorder.none,
+        filled: false,
         isDense: true,
         hintText: hintText,
         hintStyle: Styles.ts_8E9AB0_17sp,

@@ -16,7 +16,8 @@ class SetSelfInfoPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            StrRes.plsCompleteInfo.toText..style = Styles.ts_0089FF_22sp_semibold,
+            RegisterPageTitle(StrRes.plsCompleteInfo),
+            24.verticalSpace,
             _buildInputItemView(
               label: StrRes.nickname,
               controller: logic.nicknameCtrl,
@@ -25,6 +26,7 @@ class SetSelfInfoPage extends StatelessWidget {
                   label: StrRes.avatar,
                   isAvatar: true,
                   nickname: logic.nickname.value,
+                  faceURL: logic.faceURL.value,
                   onTap: logic.openPhotoSheet,
                 )),
             _buildItemView(label: StrRes.gender),
@@ -44,23 +46,21 @@ class SetSelfInfoPage extends StatelessWidget {
         behavior: HitTestBehavior.translucent,
         onTap: onTap,
         child: Container(
-          height: 72.h,
-          padding: EdgeInsets.only(bottom: 6.h),
-          alignment: Alignment.bottomCenter,
-          decoration: BoxDecoration(
+          constraints: BoxConstraints(minHeight: 64.h),
+          decoration: const BoxDecoration(
             border: BorderDirectional(
               bottom: BorderSide(
-                color: Styles.c_E8EAEF,
-                width: 1,
+                color: Styles.divider,
+                width: Styles.dividerWidth,
               ),
             ),
           ),
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              label.toText..style = Styles.ts_8E9AB0_17sp,
+              label.toText..style = Styles.ts_8E9AB0_14sp,
               const Spacer(),
-              if (null != value && !isAvatar) value.toText..style = Styles.ts_0C1C33_17sp,
+              if (null != value && !isAvatar)
+                value.toText..style = Styles.ts_0C1C33_17sp,
               if (isAvatar)
                 AvatarView(
                   width: 42.w,
@@ -68,10 +68,10 @@ class SetSelfInfoPage extends StatelessWidget {
                   text: nickname,
                   url: faceURL,
                 ),
-              4.horizontalSpace,
+              8.horizontalSpace,
               ImageRes.rightArrow.toImage
-                ..width = 24.w
-                ..height = 24.h,
+                ..width = 20.w
+                ..height = 20.h,
             ],
           ),
         ),
@@ -82,24 +82,22 @@ class SetSelfInfoPage extends StatelessWidget {
     TextEditingController? controller,
   }) =>
       Container(
-        height: 72.h,
-        padding: EdgeInsets.only(bottom: 6.h),
-        alignment: Alignment.bottomCenter,
-        decoration: BoxDecoration(
+        constraints: BoxConstraints(minHeight: 64.h),
+        decoration: const BoxDecoration(
           border: BorderDirectional(
             bottom: BorderSide(
-              color: Styles.c_E8EAEF,
-              width: 1,
+              color: Styles.divider,
+              width: Styles.dividerWidth,
             ),
           ),
         ),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            label.toText..style = Styles.ts_8E9AB0_17sp,
+            label.toText..style = Styles.ts_8E9AB0_14sp,
+            16.horizontalSpace,
             Expanded(
               child: SizedBox(
-                height: 36.h,
+                height: Styles.controlHeight.h,
                 child: TextField(
                   controller: controller,
                   textAlign: TextAlign.end,
@@ -107,7 +105,10 @@ class SetSelfInfoPage extends StatelessWidget {
                   style: Styles.ts_0C1C33_17sp,
                   maxLines: 1,
                   decoration: const InputDecoration(
+                    filled: false,
                     border: InputBorder.none,
+                    enabledBorder: InputBorder.none,
+                    focusedBorder: InputBorder.none,
                     contentPadding: EdgeInsets.zero,
                     counter: SizedBox(),
                   ),

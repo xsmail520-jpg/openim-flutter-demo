@@ -18,10 +18,8 @@ class AboutUsLogic extends GetxController {
   void getPackageInfo() async {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
     final version = packageInfo.version;
-    final appName = packageInfo.appName;
-    final buildNumber = packageInfo.buildNumber;
 
-    displayVersion.value = '$appName $version+$buildNumber SDK: ${OpenIM.version}';
+    displayVersion.value = '追逐梦 v$version';
   }
 
   void checkUpdate() {

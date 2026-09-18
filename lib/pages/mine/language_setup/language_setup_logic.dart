@@ -7,6 +7,8 @@ class LanguageSetupLogic extends GetxController {
   final isFollowSystem = false.obs;
   final isChinese = false.obs;
   final isEnglish = false.obs;
+  final isTraditionalChinese = false.obs;
+  final isVietnamese = false.obs;
 
   @override
   void onInit() {
@@ -21,16 +23,36 @@ class LanguageSetupLogic extends GetxController {
         isFollowSystem.value = false;
         isChinese.value = true;
         isEnglish.value = false;
+        isTraditionalChinese.value = false;
+        isVietnamese.value = false;
         break;
       case 2:
         isFollowSystem.value = false;
         isChinese.value = false;
         isEnglish.value = true;
+        isTraditionalChinese.value = false;
+        isVietnamese.value = false;
+        break;
+      case 3:
+        isFollowSystem.value = false;
+        isChinese.value = false;
+        isEnglish.value = false;
+        isTraditionalChinese.value = true;
+        isVietnamese.value = false;
+        break;
+      case 4:
+        isFollowSystem.value = false;
+        isChinese.value = false;
+        isEnglish.value = false;
+        isTraditionalChinese.value = false;
+        isVietnamese.value = true;
         break;
       default:
         isFollowSystem.value = true;
         isChinese.value = false;
         isEnglish.value = false;
+        isTraditionalChinese.value = false;
+        isVietnamese.value = false;
         break;
     }
   }
@@ -42,18 +64,40 @@ class LanguageSetupLogic extends GetxController {
         isFollowSystem.value = false;
         isChinese.value = true;
         isEnglish.value = false;
+        isTraditionalChinese.value = false;
+        isVietnamese.value = false;
         Get.updateLocale(const Locale('zh', 'CN'));
         break;
       case 2:
         isFollowSystem.value = false;
         isChinese.value = false;
         isEnglish.value = true;
+        isTraditionalChinese.value = false;
+        isVietnamese.value = false;
         Get.updateLocale(const Locale('en', 'US'));
+        break;
+      case 3:
+        isFollowSystem.value = false;
+        isChinese.value = false;
+        isEnglish.value = false;
+        isTraditionalChinese.value = true;
+        isVietnamese.value = false;
+        Get.updateLocale(const Locale('zh', 'TW'));
+        break;
+      case 4:
+        isFollowSystem.value = false;
+        isChinese.value = false;
+        isEnglish.value = false;
+        isTraditionalChinese.value = false;
+        isVietnamese.value = true;
+        Get.updateLocale(const Locale('vi', 'VN'));
         break;
       default:
         isFollowSystem.value = true;
         isChinese.value = false;
         isEnglish.value = false;
+        isTraditionalChinese.value = false;
+        isVietnamese.value = false;
         Get.updateLocale(window.locale);
         break;
     }

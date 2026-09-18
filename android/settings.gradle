@@ -2,7 +2,8 @@ pluginManagement {
     def flutterSdkPath = {
         def properties = new Properties()
         file("local.properties").withInputStream { properties.load(it) }
-        def flutterSdkPath = properties.getProperty("flutter.sdk")
+        def flutterSdkPath = System.getenv('OPENIM_FLUTTER_ROOT')
+                ?: properties.getProperty("flutter.sdk")
         assert flutterSdkPath != null : "flutter.sdk not set in local.properties"
         return flutterSdkPath
     }.call()
@@ -10,10 +11,14 @@ pluginManagement {
     includeBuild("${flutterSdkPath}/packages/flutter_tools/gradle")
 
     repositories {
+        // Prefer the configured mainland mirror so first-time dependency
+        // resolution does not wait on an unreachable upstream repository.
+        maven { url 'https://maven.aliyun.com/repository/public/' }
+        maven { url 'https://maven.aliyun.com/repository/google/' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin/' }
         google()
         mavenCentral()
         gradlePluginPortal()
-        maven { url 'https://maven.aliyun.com/nexus/content/groups/public/' }
     }
 }
 

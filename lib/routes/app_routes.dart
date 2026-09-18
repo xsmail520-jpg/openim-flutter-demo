@@ -18,8 +18,15 @@ abstract class AppRoutes {
   static const myInfo = '/my_info';
   static const editMyInfo = '/edit_my_info';
   static const accountSetup = '/account_setup';
+  static const security = '/security';
+  static const businessCenter = '/business_center';
   static const blacklist = '/blacklist';
   static const languageSetup = '/language_setup';
+  static const myQrcode = '/my_qrcode';
+  static const changePassword = '/change_password';
+  static const privacySecurity = '/privacy_security';
+  static const notificationSettings = '/notification_settings';
+  static const storageUsage = '/storage_usage';
   static const aboutUs = '/about_us';
   static const groupChatSetup = '/group_chat_setup';
   static const groupManage = '/group_manage';

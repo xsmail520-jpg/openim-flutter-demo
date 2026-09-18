@@ -39,7 +39,8 @@ class HttpUtil {
     dio.options.receiveTimeout = const Duration(seconds: 30);
   }
 
-  static String get operationID => DateTime.now().millisecondsSinceEpoch.toString();
+  static String get operationID =>
+      DateTime.now().millisecondsSinceEpoch.toString();
 
   static Future post(
     String path, {
@@ -103,8 +104,11 @@ class HttpUtil {
     final bytes = await File(compressPath ?? path).readAsBytes();
     final mf = MultipartFile.fromBytes(bytes, filename: fileName);
 
-    var formData =
-        FormData.fromMap({'operationID': '${DateTime.now().millisecondsSinceEpoch}', 'fileType': 1, 'file': mf});
+    var formData = FormData.fromMap({
+      'operationID': '${DateTime.now().millisecondsSinceEpoch}',
+      'fileType': 1,
+      'file': mf
+    });
 
     var resp = await dio.post<Map<String, dynamic>>(
       "${Config.imApiUrl}/third/minio_upload",
@@ -151,12 +155,14 @@ class HttpUtil {
           onCompletion?.call();
           intervalDo.drop(
               fun: () async {
-                saveFileToGallerySaver(File(cachePath), showTaost: EasyLoading.isShow);
+                await saveFileToGallerySaver(File(cachePath),
+                    showTaost: EasyLoading.isShow);
               },
               milliseconds: 1500);
         }
         if (count == total) {
-          saveFileToGallerySaver(File(cachePath), showTaost: EasyLoading.isShow);
+          await saveFileToGallerySaver(File(cachePath),
+              showTaost: EasyLoading.isShow);
         }
       },
     );
@@ -166,7 +172,8 @@ class HttpUtil {
     var byteData = await image.toByteData(format: ImageByteFormat.png);
     if (byteData != null) {
       Uint8List uint8list = byteData.buffer.asUint8List();
-      var result = await ImageGallerySaverPlus.saveImage(Uint8List.fromList(uint8list));
+      var result =
+          await ImageGallerySaverPlus.saveImage(Uint8List.fromList(uint8list));
       if (result != null) {
         var tips = StrRes.saveSuccessfully;
         if (Platform.isAndroid) {
@@ -214,20 +221,26 @@ class HttpUtil {
     );
   }
 
-  static Future saveFileToGallerySaver(File file, {String? name, bool showTaost = true}) async {
-    Permissions.storage(() async {
-      var tips = StrRes.saveSuccessfully;
-      Logger.print('saveFileToGallerySaver: ${file.path}');
-      final imageBytes = await file.readAsBytes();
+  static Future saveFileToGallerySaver(File file,
+      {String? name, bool showTaost = true}) async {
+    if (!await Permissions.requestStoragePermission()) return;
 
-      final result = await ImageGallerySaverPlus.saveImage(imageBytes, name: name);
-      if (result != null && showTaost) {
-        if (Platform.isAndroid) {
-          final filePath = result['filePath'].split('//').last;
-          tips = '${StrRes.saveSuccessfully}:$filePath';
-        }
-        IMViews.showToast(tips);
+    var tips = StrRes.saveSuccessfully;
+    Logger.print('saveFileToGallerySaver: ${file.path}');
+    final imageBytes = await file.readAsBytes();
+
+    final result =
+        await ImageGallerySaverPlus.saveImage(imageBytes, name: name);
+    final isSuccess = result is Map && result['isSuccess'] == true;
+    if (isSuccess && showTaost) {
+      if (Platform.isAndroid && result['filePath'] is String) {
+        final filePath = (result['filePath'] as String).split('//').last;
+        tips = '${StrRes.saveSuccessfully}:$filePath';
       }
-    });
+      IMViews.showToast(tips);
+    }
+    if (!isSuccess) {
+      throw StateError('ImageGallerySaverPlus failed');
+    }
   }
 }

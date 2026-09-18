@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -44,12 +43,16 @@ class AppView extends StatelessWidget {
 
     EasyLoading.instance
       ..userInteractions = false
-      ..indicatorSize = 50
-      ..backgroundColor = Styles.c_0C1C33
-      ..indicatorColor = CupertinoColors.systemGrey2
-      ..progressColor = CupertinoColors.systemGrey2
-      ..progressWidth = 6.0
-      ..textColor = Colors.white
+      ..indicatorSize = 40
+      ..radius = Styles.radiusMedium
+      ..contentPadding =
+          const EdgeInsets.symmetric(horizontal: 20, vertical: 16)
+      ..backgroundColor = Styles.ink
+      ..indicatorColor = Styles.surface
+      ..progressColor = Styles.primaryContainer
+      ..progressWidth = 4.0
+      ..textColor = Styles.surface
+      ..boxShadow = const []
       ..loadingStyle = EasyLoadingStyle.custom
       ..indicatorType = EasyLoadingIndicatorType.fadingCircle;
     return builder;

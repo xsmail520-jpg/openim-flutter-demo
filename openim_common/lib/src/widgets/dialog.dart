@@ -32,44 +32,52 @@ class CustomDialog extends StatelessWidget {
       color: Colors.transparent,
       child: Center(
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(8.r),
+          borderRadius: BorderRadius.circular(Styles.radiusMedium.r),
           child: Container(
-            width: 280.w,
-            color: Styles.c_FFFFFF,
+            width: 300.w,
+            decoration: BoxDecoration(
+              color: Styles.surface,
+              border: Border.all(
+                color: Styles.divider,
+                width: Styles.dividerWidth,
+              ),
+              borderRadius: BorderRadius.circular(Styles.radiusMedium.r),
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Padding(
                   padding: EdgeInsets.symmetric(
-                    horizontal: 20.w,
-                    vertical: 20.h,
+                    horizontal: 24.w,
+                    vertical: 22.h,
                   ),
                   child: Text(
                     title ?? '',
-                    style: Styles.ts_0C1C33_17sp,
+                    style: Styles.ts_0C1C33_17sp_medium,
+                    textAlign: TextAlign.center,
                   ),
                 ),
                 Divider(
-                  color: Styles.c_E8EAEF,
-                  height: 0.5.h,
+                  color: Styles.divider,
+                  height: Styles.dividerWidth.h,
                 ),
                 Row(
                   children: [
                     _button(
                       bgColor: Styles.c_FFFFFF,
                       text: leftText ?? StrRes.cancel,
-                      textStyle: Styles.ts_0C1C33_17sp,
+                      textStyle: Styles.ts_8E9AB0_17sp,
                       onTap: onTapLeft ?? () => Get.back(result: false),
                     ),
                     Container(
-                      color: Styles.c_E8EAEF,
-                      width: 0.5.w,
+                      color: Styles.divider,
+                      width: Styles.dividerWidth.w,
                       height: 48.h,
                     ),
                     _button(
                       bgColor: Styles.c_FFFFFF,
                       text: rightText ?? StrRes.determine,
-                      textStyle: Styles.ts_0089FF_17sp,
+                      textStyle: Styles.ts_0089FF_17sp_semibold,
                       onTap: onTapRight ?? () => Get.back(result: true),
                     ),
                   ],
@@ -89,17 +97,17 @@ class CustomDialog extends StatelessWidget {
     Function()? onTap,
   }) =>
       Expanded(
-        child: GestureDetector(
-          onTap: onTap,
-          child: Container(
-            decoration: BoxDecoration(
-              color: bgColor,
-            ),
-            height: 48.h,
-            alignment: Alignment.center,
-            child: Text(
-              text,
-              style: textStyle,
+        child: Material(
+          color: bgColor,
+          child: InkWell(
+            onTap: onTap,
+            child: Container(
+              height: 48.h,
+              alignment: Alignment.center,
+              child: Text(
+                text,
+                style: textStyle,
+              ),
             ),
           ),
         ),
@@ -126,14 +134,19 @@ class ForwardHintDialog extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
             margin: EdgeInsets.symmetric(horizontal: 36.w),
             decoration: BoxDecoration(
-              color: Styles.c_FFFFFF,
-              borderRadius: BorderRadius.circular(8.r),
+              color: Styles.surface,
+              borderRadius: BorderRadius.circular(Styles.radiusMedium.r),
+              border: Border.all(
+                color: Styles.divider,
+                width: Styles.dividerWidth,
+              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                (list.length == 1 ? StrRes.sentTo : StrRes.sentSeparatelyTo).toText
+                (list.length == 1 ? StrRes.sentTo : StrRes.sentSeparatelyTo)
+                    .toText
                   ..style = Styles.ts_0C1C33_17sp_medium,
                 5.verticalSpace,
                 list.length == 1
@@ -155,7 +168,8 @@ class ForwardHintDialog extends StatelessWidget {
                     : ConstrainedBox(
                         constraints: BoxConstraints(maxHeight: 120.h),
                         child: GridView.builder(
-                          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 5,
                             crossAxisSpacing: 10.w,
                             mainAxisSpacing: 0,
@@ -187,13 +201,31 @@ class ForwardHintDialog extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    StrRes.cancel.toText
-                      ..style = Styles.ts_0C1C33_17sp
-                      ..onTap = () => Get.back(),
+                    GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onTap: () => Get.back(),
+                      child: SizedBox(
+                        width: 64.w,
+                        height: Styles.controlHeight.h,
+                        child: Center(
+                          child: StrRes.cancel.toText
+                            ..style = Styles.ts_8E9AB0_17sp,
+                        ),
+                      ),
+                    ),
                     26.horizontalSpace,
-                    StrRes.determine.toText
-                      ..style = Styles.ts_0089FF_17sp
-                      ..onTap = () => Get.back(result: true),
+                    GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onTap: () => Get.back(result: true),
+                      child: SizedBox(
+                        width: 64.w,
+                        height: Styles.controlHeight.h,
+                        child: Center(
+                          child: StrRes.determine.toText
+                            ..style = Styles.ts_0089FF_17sp_semibold,
+                        ),
+                      ),
+                    ),
                   ],
                 )
               ],

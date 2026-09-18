@@ -24,53 +24,72 @@ class SelectContactsFromSearchPage extends StatelessWidget {
           onSubmitted: (_) => logic.search(),
           onCleared: () => logic.focusNode.requestFocus(),
         ),
-        backgroundColor: Styles.c_F8F9FA,
-        body: Obx(() => logic.isSearchNotResult
-            ? _emptyListView
-            : ListView.builder(
-                itemCount: logic.resultList.length,
-                itemBuilder: (_, index) => _buildItemView(logic.resultList.elementAt(index)),
-              )),
+        backgroundColor: Styles.background,
+        body: SafeArea(
+          top: false,
+          child: Obx(
+            () => logic.isSearchNotResult
+                ? _emptyListView
+                : ListView.builder(
+                    padding: EdgeInsets.only(top: 8.h),
+                    itemCount: logic.resultList.length,
+                    itemBuilder: (_, index) => _buildItemView(
+                      logic.resultList.elementAt(index),
+                      isFirst: index == 0,
+                    ),
+                  ),
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildItemView(dynamic info) {
-    Widget buildChild() => Ink(
-          height: 64.h,
-          color: Styles.c_FFFFFF,
+  /// 搜索结果沿用联系人名录层级，并以连续细分隔线承载任意结果长度。
+  Widget _buildItemView(dynamic info, {required bool isFirst}) {
+    Widget buildChild() => Material(
+          color: Styles.surface,
           child: InkWell(
             onTap: selectContactsLogic.onTap(info),
             child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              constraints: BoxConstraints(minHeight: 68.h),
+              padding: EdgeInsets.only(left: 16.w, right: 28.w),
+              decoration: BoxDecoration(
+                border: BorderDirectional(
+                  top: isFirst
+                      ? const BorderSide(
+                          color: Styles.divider,
+                          width: Styles.dividerWidth,
+                        )
+                      : BorderSide.none,
+                  bottom: const BorderSide(
+                    color: Styles.divider,
+                    width: Styles.dividerWidth,
+                  ),
+                ),
+              ),
               child: Row(
                 children: [
-                  if (selectContactsLogic.isMultiModel)
-                    Padding(
-                      padding: EdgeInsets.only(right: 10.w),
-                      child: ChatRadio(
-                        checked: selectContactsLogic.isChecked(info),
-                        enabled: !selectContactsLogic.isDefaultChecked(info),
-                      ),
+                  if (selectContactsLogic.isMultiModel) ...[
+                    ChatRadio(
+                      checked: selectContactsLogic.isChecked(info),
+                      enabled: !selectContactsLogic.isDefaultChecked(info),
                     ),
+                    12.horizontalSpace,
+                  ],
                   AvatarView(
                     url: logic.parseFaceURL(info),
                     text: logic.parseNickname(info),
                     isGroup: info is GroupInfo,
+                    width: 42.w,
+                    height: 42.h,
                   ),
-                  10.horizontalSpace,
+                  12.horizontalSpace,
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SearchKeywordText(
-                          text: logic.parseNickname(info) ?? '',
-                          keyText: logic.searchCtrl.text.trim(),
-                          style: Styles.ts_0C1C33_17sp,
-                          keyStyle: Styles.ts_0089FF_17sp,
-                        ),
-                      ],
+                    child: SearchKeywordText(
+                      text: logic.parseNickname(info) ?? '',
+                      keyText: logic.searchCtrl.text.trim(),
+                      style: Styles.ts_0C1C33_17sp,
+                      keyStyle: Styles.ts_0089FF_17sp_medium,
                     ),
                   ),
                 ],
@@ -81,14 +100,10 @@ class SelectContactsFromSearchPage extends StatelessWidget {
     return selectContactsLogic.isMultiModel ? Obx(buildChild) : buildChild();
   }
 
-  Widget get _emptyListView => SizedBox(
-        width: 1.sw,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            44.verticalSpace,
-            StrRes.searchNotFound.toText..style = Styles.ts_8E9AB0_17sp,
-          ],
+  /// 空结果占据可用区域居中反馈，避免提示漂浮在搜索栏下方。
+  Widget get _emptyListView => SizedBox.expand(
+        child: Center(
+          child: StrRes.searchNotFound.toText..style = Styles.ts_8E9AB0_16sp,
         ),
       );
 }

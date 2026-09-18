@@ -81,22 +81,54 @@ class _VerifyCodeSendButtonState extends State<VerifyCodeSendButton> {
 
   @override
   Widget build(BuildContext context) => _firstTime && !widget.auto
-      ? (StrRes.sendVerificationCode.toText
-        ..style = Styles.ts_0089FF_12sp
-        ..onTap = () {
-          widget.onTapCallback().then((start) {
-            if (start) _restart();
-          });
-        })
+      ? _buildAction(
+          text: StrRes.sendVerificationCode,
+          style: Styles.ts_0089FF_12sp,
+          onTap: _requestCode,
+        )
       : (_isEnabled
-          ? (StrRes.resendVerificationCode.toText
-            ..style = Styles.ts_0089FF_12sp
-            ..onTap = () {
-              widget.onTapCallback().then((start) {
-                if (start) _restart();
-              });
-            })
-          : (sprintf(StrRes.verificationCodeTimingReminder, [_seconds]).toText..style = Styles.ts_8E9AB0_12sp));
+          ? _buildAction(
+              text: StrRes.resendVerificationCode,
+              style: Styles.ts_0089FF_12sp,
+              onTap: _requestCode,
+            )
+          : _buildAction(
+              text: sprintf(
+                StrRes.verificationCodeTimingReminder,
+                [_seconds],
+              ),
+              style: Styles.ts_8E9AB0_12sp,
+            ));
+
+  void _requestCode() {
+    widget.onTapCallback().then((start) {
+      if (start) _restart();
+    });
+  }
+
+  Widget _buildAction({
+    required String text,
+    required TextStyle style,
+    VoidCallback? onTap,
+  }) =>
+      Semantics(
+        button: onTap != null,
+        enabled: onTap != null,
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: onTap,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              minWidth: Styles.controlHeight,
+              minHeight: Styles.controlHeight,
+            ),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text(text, style: style),
+            ),
+          ),
+        ),
+      );
 
   bool get _isEnabled => _seconds == 0;
 }

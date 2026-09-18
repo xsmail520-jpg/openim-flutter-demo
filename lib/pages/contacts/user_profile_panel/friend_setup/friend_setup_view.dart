@@ -16,70 +16,106 @@ class FriendSetupPage extends StatelessWidget {
     return Scaffold(
       appBar: TitleBar.back(
         title: StrRes.friendSetup,
+        showUnderline: true,
       ),
-      backgroundColor: Styles.c_F8F9FA,
-      body: Column(
-        children: [
-          10.verticalSpace,
-          _buildItemView(
-            label: StrRes.setupRemark,
-            borderRadius: BorderRadius.only(
-              topRight: Radius.circular(6.r),
-              topLeft: Radius.circular(6.r),
+      backgroundColor: Styles.background,
+      body: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(vertical: 12.h),
+        child: Column(
+          children: [
+            _buildSection(
+              children: [
+                _buildItemView(
+                  label: StrRes.setupRemark,
+                  showRightArrow: true,
+                  showDivider: true,
+                  onTap: logic.setFriendRemark,
+                ),
+                _buildItemView(
+                  label: StrRes.recommendToFriend,
+                  showRightArrow: true,
+                  onTap: logic.recommendToFriend,
+                ),
+              ],
             ),
-            showRightArrow: true,
-            onTap: logic.setFriendRemark,
-          ),
-          _buildItemView(
-            label: StrRes.recommendToFriend,
-            borderRadius: BorderRadius.only(
-              bottomLeft: Radius.circular(6.r),
-              bottomRight: Radius.circular(6.r),
+            12.verticalSpace,
+            _buildSection(
+              children: [
+                Obx(
+                  () => _buildItemView(
+                    label: StrRes.addToBlacklist,
+                    showSwitchButton: true,
+                    switchOn:
+                        logic.userProfilesLogic.userInfo.value.isBlacklist ==
+                            true,
+                    onChanged: (_) => logic.toggleBlacklist(),
+                  ),
+                ),
+              ],
             ),
-            showRightArrow: true,
-            onTap: logic.recommendToFriend,
-          ),
-          10.verticalSpace,
-          Obx(() => _buildItemView(
-                label: StrRes.addToBlacklist,
-                showSwitchButton: true,
-                switchOn:
-                    logic.userProfilesLogic.userInfo.value.isBlacklist == true,
-                onChanged: (_) => logic.toggleBlacklist(),
-              )),
-          10.verticalSpace,
-          _buildItemView(
-            isDelFriendButton: true,
-            onTap: logic.deleteFromFriendList,
-          )
-        ],
+            12.verticalSpace,
+            _buildSection(
+              children: [
+                _buildItemView(
+                  isDelFriendButton: true,
+                  onTap: logic.deleteFromFriendList,
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
+  /// 设置项按业务关系分区，区内使用连续列表和水平边界。
+  Widget _buildSection({required List<Widget> children}) => Container(
+        decoration: const BoxDecoration(
+          color: Styles.surface,
+          border: Border.symmetric(
+            horizontal: BorderSide(
+              color: Styles.divider,
+              width: Styles.dividerWidth,
+            ),
+          ),
+        ),
+        child: Column(children: children),
+      );
+
+  /// 每行保证 56dp 操作区域，危险操作只通过语义色区分而不改变回调。
   Widget _buildItemView({
     String? label,
     bool showRightArrow = false,
     bool showSwitchButton = false,
-    BorderRadius? borderRadius,
+    bool showDivider = false,
     bool switchOn = false,
     bool isDelFriendButton = false,
     ValueChanged<bool>? onChanged,
     Function()? onTap,
   }) =>
-      Container(
-        margin: EdgeInsets.symmetric(horizontal: 10.w),
+      Material(
+        color: Styles.surface,
         child: Ink(
-          height: 46.h,
-          decoration: BoxDecoration(
-            color: Styles.c_FFFFFF,
-            borderRadius: borderRadius ?? BorderRadius.circular(6.r),
-          ),
           child: InkWell(
             onTap: onTap,
             child: Container(
+              constraints: BoxConstraints(minHeight: 56.h),
               alignment: isDelFriendButton ? Alignment.center : null,
-              padding: EdgeInsets.symmetric(horizontal: 16.w),
+              margin: EdgeInsets.only(left: isDelFriendButton ? 0 : 16.w),
+              padding: EdgeInsets.only(
+                left: isDelFriendButton ? 16.w : 0,
+                right: 16.w,
+              ),
+              decoration: BoxDecoration(
+                border: showDivider
+                    ? const BorderDirectional(
+                        bottom: BorderSide(
+                          color: Styles.divider,
+                          width: Styles.dividerWidth,
+                        ),
+                      )
+                    : null,
+              ),
               child: isDelFriendButton
                   ? (StrRes.unfriend.toText..style = Styles.ts_FF381F_17sp)
                   : Row(
@@ -94,7 +130,7 @@ class FriendSetupPage extends StatelessWidget {
                           CupertinoSwitch(
                             value: switchOn,
                             onChanged: onChanged,
-                            activeColor: Styles.c_0089FF,
+                            activeColor: Styles.primary,
                           ),
                       ],
                     ),

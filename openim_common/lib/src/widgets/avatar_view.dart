@@ -50,7 +50,18 @@ class AvatarView extends StatelessWidget {
 
   TextStyle get _textStyle => textStyle ?? Styles.ts_FFFFFF_16sp;
 
-  Color get _textAvatarBgColor => Styles.c_0089FF;
+  Color get _textAvatarBgColor {
+    if (isGroup) return Styles.primaryPressed;
+    const palette = <Color>[
+      Styles.primary,
+      Color(0xFF9D3340),
+      Color(0xFF8A4C32),
+      Color(0xFF6E4650),
+      Color(0xFF7E2637),
+    ];
+    final seed = (text ?? url ?? '').runes.fold<int>(0, (sum, e) => sum + e);
+    return palette[seed % palette.length];
+  }
 
   String? get _showName {
     if (isGroup) return null;
@@ -69,17 +80,20 @@ class AvatarView extends StatelessWidget {
       behavior: HitTestBehavior.translucent,
       onTap: onTap ??
           ((enabledPreview && isUrlValid)
-              ? () => IMUtils.previewUrlPicture([MediaSource(thumbnail: url!, url: url)])
+              ? () => IMUtils.previewUrlPicture(
+                  [MediaSource(thumbnail: url!, url: url)])
               : null),
       onLongPress: onLongPress,
-      child: builder?.call() ?? (nineGridUrl.isNotEmpty ? _nineGridAvatar() : _normalAvatar()),
+      child: builder?.call() ??
+          (nineGridUrl.isNotEmpty ? _nineGridAvatar() : _normalAvatar()),
     );
     return Hero(
       tag: tag,
       child: isCircle
           ? ClipOval(child: child)
           : ClipRRect(
-              borderRadius: borderRadius ?? BorderRadius.circular(6.r),
+              borderRadius:
+                  borderRadius ?? BorderRadius.circular(Styles.radiusSmall.r),
               child: child,
             ),
     );
@@ -98,7 +112,9 @@ class AvatarView extends StatelessWidget {
         child: null == _showName
             ? (showDefaultAvatar
                 ? FaIcon(
-                    isGroup ? FontAwesomeIcons.userGroup : FontAwesomeIcons.solidUser,
+                    isGroup
+                        ? FontAwesomeIcons.userGroup
+                        : FontAwesomeIcons.solidUser,
                     color: Colors.white,
                     size: _avatarSize / 2,
                   )
@@ -121,7 +137,7 @@ class AvatarView extends StatelessWidget {
   Widget _nineGridAvatar() => Container(
         width: _avatarSize,
         height: _avatarSize,
-        color: Colors.grey[300],
+        color: Styles.divider,
         padding: const EdgeInsets.all(2.0),
         alignment: Alignment.center,
         child: _nineGridColumn(),
@@ -247,25 +263,9 @@ class RedDotView extends StatelessWidget {
         height: 8,
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: Styles.c_FF381F,
+          color: Styles.primary,
           shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0x26C61B4A),
-              offset: Offset(1.15.w, 1.15.h),
-              blurRadius: 57.58.r,
-            ),
-            BoxShadow(
-              color: const Color(0x1AC61B4A),
-              offset: Offset(2.3.w, 2.3.h),
-              blurRadius: 11.52.r,
-            ),
-            BoxShadow(
-              color: const Color(0x0DC61B4A),
-              offset: Offset(4.61.w, 4.61.h),
-              blurRadius: 17.28.r,
-            ),
-          ],
+          border: Border.all(color: Styles.surface, width: 1),
         ),
       );
 }

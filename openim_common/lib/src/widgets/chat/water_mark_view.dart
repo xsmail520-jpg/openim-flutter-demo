@@ -38,7 +38,8 @@ class WaterMarkBgView extends StatelessWidget {
         alignment: Alignment.center,
         fit: StackFit.expand,
         children: [
-          if (path?.isNotEmpty == true) Image.file(File(path!), fit: BoxFit.cover),
+          if (path?.isNotEmpty == true)
+            Image.file(File(path!), fit: BoxFit.cover),
           if (text.isNotEmpty) _buildWaterMarkTextView(context: context),
           Column(
             children: [
@@ -71,8 +72,8 @@ class WaterMarkBgView extends StatelessWidget {
   Widget _buildWaterMarkTextView({required BuildContext context}) {
     var style = textStyle ??
         TextStyle(
-          color: Color(0x707070).withOpacity(0.25),
-          fontSize: 16.sp,
+          color: Styles.muted.withValues(alpha: .18),
+          fontSize: 14.sp,
         );
     double screenW = MediaQuery.of(context).size.width;
     double screenH = MediaQuery.of(context).size.height;
@@ -112,9 +113,11 @@ class WaterMarkBgView extends StatelessWidget {
   }
 
   Size _textSize(String text, TextStyle style) {
-    final TextPainter textPainter =
-        TextPainter(text: TextSpan(text: text, style: style), maxLines: 1, textDirection: TextDirection.ltr)
-          ..layout(minWidth: 0, maxWidth: double.infinity);
+    final TextPainter textPainter = TextPainter(
+        text: TextSpan(text: text, style: style),
+        maxLines: 1,
+        textDirection: TextDirection.ltr)
+      ..layout(minWidth: 0, maxWidth: double.infinity);
     return textPainter.size;
   }
 }

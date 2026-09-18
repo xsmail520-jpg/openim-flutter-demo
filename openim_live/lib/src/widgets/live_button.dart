@@ -15,15 +15,33 @@ class LiveButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        icon.toImage
-          ..width = 62.w
-          ..height = 62.h
-          ..onTap = onTap,
-        10.verticalSpace,
-        text.toText..style = Styles.ts_FFFFFF_opacity70_14sp,
-      ],
+    return Semantics(
+      button: true,
+      label: text,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(Styles.radiusMedium.r),
+          child: SizedBox(
+            width: 80.w,
+            height: 92.h,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                icon.toImage
+                  ..width = 62.w
+                  ..height = 62.h,
+                6.verticalSpace,
+                text.toText
+                  ..style = Styles.ts_FFFFFF_opacity70_14sp
+                  ..maxLines = 1
+                  ..overflow = TextOverflow.ellipsis,
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 

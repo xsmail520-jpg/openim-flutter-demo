@@ -15,10 +15,10 @@ double videoWidth = 120.w;
 double locationWidth = 220.w;
 
 BorderRadius borderRadius(bool isISend) => BorderRadius.only(
-      topLeft: Radius.circular(isISend ? 6.r : 0),
-      topRight: Radius.circular(isISend ? 0 : 6.r),
-      bottomLeft: Radius.circular(6.r),
-      bottomRight: Radius.circular(6.r),
+      topLeft: Radius.circular(isISend ? Styles.radiusSmall.r : 0),
+      topRight: Radius.circular(isISend ? 0 : Styles.radiusSmall.r),
+      bottomLeft: Radius.circular(Styles.radiusSmall.r),
+      bottomRight: Radius.circular(Styles.radiusSmall.r),
     );
 
 class MsgStreamEv<T> {
@@ -87,6 +87,7 @@ class ChatItemView extends StatefulWidget {
     this.onTapLeftAvatar,
     this.onTapRightAvatar,
     this.onLongPressRightAvatar,
+    this.onLongPressItemView,
     this.onVisibleTrulyText,
     this.onFailedToResend,
     this.onClickItemView,
@@ -118,9 +119,12 @@ class ChatItemView extends StatefulWidget {
   final Function()? onTapLeftAvatar;
   final Function()? onTapRightAvatar;
   final Function()? onLongPressRightAvatar;
+  final Function()? onLongPressItemView;
   final Function(String? text)? onVisibleTrulyText;
   final Function()? onClickItemView;
-  final ValueChanged<({String userID, String name, String? faceURL, String? groupID})> onTapUserProfile;
+  final ValueChanged<
+          ({String userID, String name, String? faceURL, String? groupID})>
+      onTapUserProfile;
 
   final Function()? onFailedToResend;
   @override
@@ -150,7 +154,8 @@ class _ChatItemViewState extends State<ChatItemView> {
     );
   }
 
-  Widget get _child => widget.itemViewBuilder?.call(context, _message) ?? _buildChildView();
+  Widget get _child =>
+      widget.itemViewBuilder?.call(context, _message) ?? _buildChildView();
 
   Widget _buildChildView() {
     Widget? child;
@@ -167,6 +172,7 @@ class _ChatItemViewState extends State<ChatItemView> {
     if (_message.isTextType) {
       isBubbleBg = true;
       child = ChatText(
+        isISend: _isISend,
         text: _message.textElem!.content!,
         patterns: widget.patterns,
         textScaleFactor: widget.textScaleFactor,
@@ -178,8 +184,11 @@ class _ChatItemViewState extends State<ChatItemView> {
             isISend: _isISend,
             message: _message,
           );
+    } else if (_message.isVoiceType) {
+      child = ChatVoiceView(message: _message, isISend: _isISend);
     } else if (_message.isNotificationType) {
-      if (_message.contentType == MessageType.groupInfoSetAnnouncementNotification) {
+      if (_message.contentType ==
+          MessageType.groupInfoSetAnnouncementNotification) {
         final map = json.decode(_message.notificationElem!.detail!);
         final ntf = GroupNotification.fromJson(map);
         final noticeContent = ntf.group?.notification;
@@ -211,7 +220,9 @@ class _ChatItemViewState extends State<ChatItemView> {
       timelineStr: widget.timelineStr,
       timeStr: IMUtils.getChatTimeline(_message.sendTime!, 'HH:mm:ss'),
       hasRead: _message.isRead!,
-      isSending: _message.isVideoType ? false : _message.status == MessageStatus.sending,
+      isSending: _message.isVideoType
+          ? false
+          : _message.status == MessageStatus.sending,
       isSendFailed: _message.status == MessageStatus.failed,
       isBubbleBg: child == null ? true : isBubbleBg,
       ignorePointer: widget.ignorePointer,
@@ -223,6 +234,7 @@ class _ChatItemViewState extends State<ChatItemView> {
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: widget.onClickItemView,
+        onLongPress: widget.onLongPressItemView,
         child: child ?? ChatText(text: StrRes.unsupportedMessage),
       ),
     );

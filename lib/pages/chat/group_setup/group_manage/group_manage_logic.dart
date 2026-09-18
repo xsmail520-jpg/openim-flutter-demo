@@ -11,6 +11,38 @@ class GroupManageLogic extends GetxController {
 
   Rx<GroupInfo> get groupInfo => groupSetupLogic.groupInfo;
 
+  bool get isGroupLocked => groupInfo.value.status == 3;
+
+  bool get privacyEnabled =>
+      groupInfo.value.lookMemberInfo == 1 &&
+      groupInfo.value.applyMemberFriend == 1;
+
+  Future<void> changeGroupLock(bool locked) async {
+    await LoadingView.singleton.wrap(
+      asyncFunction: () => OpenIM.iMManager.groupManager.changeGroupMute(
+        groupID: groupInfo.value.groupID,
+        mute: locked,
+      ),
+    );
+    groupInfo.update((value) => value?.status = locked ? 3 : 0);
+  }
+
+  Future<void> changeGroupPrivacy(bool enabled) async {
+    await LoadingView.singleton.wrap(
+      asyncFunction: () => OpenIM.iMManager.groupManager.setGroupInfo(
+        GroupInfo(
+          groupID: groupInfo.value.groupID,
+          lookMemberInfo: enabled ? 1 : 0,
+          applyMemberFriend: enabled ? 1 : 0,
+        ),
+      ),
+    );
+    groupInfo.update((value) {
+      value?.lookMemberInfo = enabled ? 1 : 0;
+      value?.applyMemberFriend = enabled ? 1 : 0;
+    });
+  }
+
   void transferGroupOwnerRight() async {
     var result = await AppNavigator.startGroupMemberList(
       groupInfo: groupInfo.value,

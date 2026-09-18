@@ -14,112 +14,192 @@ class ProcessGroupRequestsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: TitleBar.back(title: StrRes.newGroup),
-      backgroundColor: Styles.c_F8F9FA,
-      body: Container(
-        color: Styles.c_FFFFFF,
-        padding: EdgeInsets.symmetric(
-          horizontal: 16.w,
-          vertical: 16.h,
-        ),
+      appBar: TitleBar.back(title: StrRes.newGroup, showUnderline: true),
+      backgroundColor: Styles.background,
+      body: SafeArea(
+        top: false,
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                AvatarView(
-                  width: 48.w,
-                  height: 48.h,
-                  url: logic.applicationInfo.userFaceURL,
-                  text: logic.applicationInfo.nickname,
-                ),
-                10.horizontalSpace,
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            Expanded(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.symmetric(vertical: 12.h),
+                child: Column(
                   children: [
-                    (logic.applicationInfo.nickname ?? '').toText..style = Styles.ts_0C1C33_17sp,
-                    RichText(
-                      text: TextSpan(
-                        text: StrRes.applyJoin,
-                        style: Styles.ts_8E9AB0_14sp,
-                        children: [
-                          WidgetSpan(child: 2.horizontalSpace),
-                          TextSpan(
-                            text: logic.groupName,
-                            style: Styles.ts_0089FF_14sp,
-                          ),
-                        ],
-                      ),
-                    )
+                    _buildApplicantSection(),
+                    if (IMUtils.isNotNullEmptyStr(
+                      logic.applicationInfo.reqMsg,
+                    )) ...[
+                      12.verticalSpace,
+                      _buildReasonSection(),
+                    ],
+                    12.verticalSpace,
+                    _buildSourceSection(),
                   ],
                 ),
-              ],
-            ),
-            12.verticalSpace,
-            if (IMUtils.isNotNullEmptyStr(logic.applicationInfo.reqMsg))
-              Container(
-                height: 80.h,
-                width: 343.w,
-                margin: EdgeInsets.only(bottom: 12.h),
-                decoration: BoxDecoration(
-                  color: Styles.c_E8EAEF_opacity50,
-                  borderRadius: BorderRadius.circular(6.r),
-                ),
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.symmetric(
-                    horizontal: 16.w,
-                    vertical: 8.h,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      (logic.applicationInfo.reqMsg ?? '').toText..style = Styles.ts_0C1C33_17sp,
-                    ],
-                  ),
-                ),
               ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                sprintf(StrRes.sourceFrom, [logic.sourceFrom]).toText..style = Styles.ts_8E9AB0_14sp
-              ],
             ),
-            12.verticalSpace,
-            Row(
-              children: [
-                Flexible(child: _buildRejectButton()),
-                12.horizontalSpace,
-                Flexible(
-                  child: Button(
-                    onTap: logic.approve,
-                    text: StrRes.accept,
-                    textStyle: Styles.ts_FFFFFF_17sp,
-                  ),
-                ),
-              ],
-            )
+            _buildActionBar(),
           ],
         ),
       ),
     );
   }
 
+  /// 入群申请概要按申请人、目标群两级信息展示，长内容保持可收缩。
+  Widget _buildApplicantSection() => Container(
+        constraints: BoxConstraints(minHeight: 84.h),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 14.h),
+        decoration: const BoxDecoration(
+          color: Styles.surface,
+          border: Border.symmetric(
+            horizontal: BorderSide(
+              color: Styles.divider,
+              width: Styles.dividerWidth,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            AvatarView(
+              width: 48.w,
+              height: 48.h,
+              url: logic.applicationInfo.userFaceURL,
+              text: logic.applicationInfo.nickname,
+            ),
+            12.horizontalSpace,
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  (logic.applicationInfo.nickname ?? '').toText
+                    ..style = Styles.ts_0C1C33_17sp_medium
+                    ..maxLines = 1
+                    ..overflow = TextOverflow.ellipsis,
+                  5.verticalSpace,
+                  RichText(
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    text: TextSpan(
+                      text: StrRes.applyJoin,
+                      style: Styles.ts_8E9AB0_14sp,
+                      children: [
+                        WidgetSpan(child: 2.horizontalSpace),
+                        TextSpan(
+                          text: logic.groupName,
+                          style: Styles.ts_0089FF_14sp,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+
+  Widget _buildReasonSection() => Container(
+        width: double.infinity,
+        padding: EdgeInsets.all(16.w),
+        decoration: const BoxDecoration(
+          color: Styles.surface,
+          border: Border.symmetric(
+            horizontal: BorderSide(
+              color: Styles.divider,
+              width: Styles.dividerWidth,
+            ),
+          ),
+        ),
+        child: Container(
+          constraints: BoxConstraints(minHeight: 80.h),
+          padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+          decoration: BoxDecoration(
+            color: Styles.background,
+            border: Border(
+              left: BorderSide(color: Styles.primary, width: 3.w),
+              top: const BorderSide(
+                color: Styles.divider,
+                width: Styles.dividerWidth,
+              ),
+              right: const BorderSide(
+                color: Styles.divider,
+                width: Styles.dividerWidth,
+              ),
+              bottom: const BorderSide(
+                color: Styles.divider,
+                width: Styles.dividerWidth,
+              ),
+            ),
+            borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
+          ),
+          child: (logic.applicationInfo.reqMsg ?? '').toText
+            ..style = Styles.ts_0C1C33_17sp,
+        ),
+      );
+
+  Widget _buildSourceSection() => Container(
+        constraints: BoxConstraints(minHeight: 48.h),
+        width: double.infinity,
+        alignment: Alignment.centerRight,
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
+        decoration: const BoxDecoration(
+          color: Styles.surface,
+          border: Border.symmetric(
+            horizontal: BorderSide(
+              color: Styles.divider,
+              width: Styles.dividerWidth,
+            ),
+          ),
+        ),
+        child: sprintf(StrRes.sourceFrom, [logic.sourceFrom]).toText
+          ..style = Styles.ts_8E9AB0_14sp,
+      );
+
+  Widget _buildActionBar() => Container(
+        padding: EdgeInsets.fromLTRB(16.w, 10.h, 16.w, 12.h),
+        decoration: const BoxDecoration(
+          color: Styles.surface,
+          border: BorderDirectional(
+            top: BorderSide(
+              color: Styles.divider,
+              width: Styles.dividerWidth,
+            ),
+          ),
+        ),
+        child: Row(
+          children: [
+            Expanded(child: _buildRejectButton()),
+            12.horizontalSpace,
+            Expanded(
+              child: Button(
+                onTap: logic.approve,
+                text: StrRes.accept,
+                textStyle: Styles.ts_FFFFFF_17sp,
+              ),
+            ),
+          ],
+        ),
+      );
+
   Widget _buildRejectButton() => Material(
+        color: Colors.transparent,
         child: Ink(
           height: 44.h,
           decoration: BoxDecoration(
-            color: Styles.c_FFFFFF,
+            color: Styles.surface,
             border: Border.all(
-              color: Styles.c_E8EAEF,
+              color: Styles.danger,
               width: 1,
             ),
-            borderRadius: BorderRadius.circular(6.r),
+            borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
           ),
           child: InkWell(
             onTap: logic.reject,
+            borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
             child: Container(
               alignment: Alignment.center,
-              child: StrRes.reject.toText..style = Styles.ts_0C1C33_17sp,
+              child: StrRes.reject.toText..style = Styles.ts_FF381F_17sp,
             ),
           ),
         ),

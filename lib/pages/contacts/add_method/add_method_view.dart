@@ -13,34 +13,49 @@ class AddContactsMethodPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: TitleBar.back(title: StrRes.add),
-      body: Column(
-        children: [
-          10.verticalSpace,
-          _buildItemView(
-            icon: ImageRes.addFriendBlue,
-            text: StrRes.addFriend,
-            hintText: StrRes.addFriendHint,
-            onTap: logic.addFriend,
+      appBar: TitleBar.back(title: StrRes.add, showUnderline: true),
+      backgroundColor: Styles.background,
+      body: SingleChildScrollView(
+        padding: EdgeInsets.symmetric(vertical: 12.h),
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Styles.surface,
+            border: Border.symmetric(
+              horizontal: BorderSide(
+                color: Styles.divider,
+                width: Styles.dividerWidth,
+              ),
+            ),
           ),
-          _buildItemView(
-            icon: ImageRes.createGroupBlue,
-            text: StrRes.createGroup,
-            hintText: StrRes.createGroupHint,
-            onTap: logic.createGroup,
+          child: Column(
+            children: [
+              _buildItemView(
+                icon: ImageRes.addFriendBlue,
+                text: StrRes.addFriend,
+                hintText: StrRes.addFriendHint,
+                onTap: logic.addFriend,
+              ),
+              _buildItemView(
+                icon: ImageRes.createGroupBlue,
+                text: StrRes.createGroup,
+                hintText: StrRes.createGroupHint,
+                onTap: logic.createGroup,
+              ),
+              _buildItemView(
+                icon: ImageRes.addGroupBLue,
+                text: StrRes.addGroup,
+                hintText: StrRes.addGroupHint,
+                onTap: logic.addGroup,
+                underline: false,
+              ),
+            ],
           ),
-          _buildItemView(
-            icon: ImageRes.addGroupBLue,
-            text: StrRes.addGroup,
-            hintText: StrRes.addGroupHint,
-            onTap: logic.addGroup,
-            underline: false,
-          ),
-        ],
+        ),
       ),
     );
   }
 
+  /// 添加方式合并为单一业务分区，通过图标底板、主副标题和箭头明确层级。
   Widget _buildItemView({
     required String icon,
     required String text,
@@ -49,26 +64,36 @@ class AddContactsMethodPage extends StatelessWidget {
     Function()? onTap,
   }) =>
       Ink(
-        color: Styles.c_FFFFFF,
+        color: Styles.surface,
         child: InkWell(
           onTap: onTap,
-          child: SizedBox(
-            height: 74.h,
+          child: Container(
+            constraints: BoxConstraints(minHeight: 76.h),
+            padding: EdgeInsets.only(left: 16.w),
             child: Row(
               children: [
-                22.horizontalSpace,
-                icon.toImage
-                  ..width = 28.w
-                  ..height = 28.h,
-                16.horizontalSpace,
+                Container(
+                  width: 44.w,
+                  height: 44.h,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: Styles.primaryContainer,
+                    borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
+                  ),
+                  child: icon.toImage
+                    ..width = 24.w
+                    ..height = 24.h
+                    ..color = Styles.primary,
+                ),
+                12.horizontalSpace,
                 Expanded(
                   child: Container(
                     decoration: underline
-                        ? BoxDecoration(
+                        ? const BoxDecoration(
                             border: BorderDirectional(
                               bottom: BorderSide(
-                                color: Styles.c_E8EAEF,
-                                width: .5,
+                                color: Styles.divider,
+                                width: Styles.dividerWidth,
                               ),
                             ),
                           )
@@ -87,8 +112,8 @@ class AddContactsMethodPage extends StatelessWidget {
                           ),
                         ),
                         ImageRes.rightArrow.toImage
-                          ..width = 24.w
-                          ..height = 24.h,
+                          ..width = 20.w
+                          ..height = 20.h,
                         16.horizontalSpace,
                       ],
                     ),

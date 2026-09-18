@@ -5,14 +5,19 @@ import 'package:get/get.dart';
 import 'package:openim_common/openim_common.dart';
 
 class Apis {
-  static Options get imTokenOptions => Options(headers: {'token': DataSp.imToken});
+  static Options get imTokenOptions =>
+      Options(headers: {'token': DataSp.imToken});
 
-  static Options get chatTokenOptions => Options(headers: {'token': DataSp.chatToken});
+  static Options get chatTokenOptions =>
+      Options(headers: {'token': DataSp.chatToken});
 
   static StreamController kickoffController = StreamController<int>.broadcast();
 
   static void _kickoff(int? errCode) {
-    if (errCode == 1501 || errCode == 1503 || errCode == 1504 || errCode == 1505) {
+    if (errCode == 1501 ||
+        errCode == 1503 ||
+        errCode == 1504 ||
+        errCode == 1505) {
       kickoffController.sink.add(errCode);
     }
   }
@@ -27,6 +32,7 @@ class Apis {
   }) async {
     try {
       var data = await HttpUtil.post(Urls.login, data: {
+        'deviceID': DataSp.getDeviceID(),
         "areaCode": areaCode,
         'account': account,
         'phoneNumber': phoneNumber,
@@ -169,6 +175,7 @@ class Apis {
     int? allowAddFriend,
     int? allowBeep,
     int? allowVibration,
+    int? globalRecvMsgOpt,
   }) async {
     try {
       Map<String, dynamic> param = {'userID': userID};
@@ -191,6 +198,7 @@ class Apis {
       put('allowAddFriend', allowAddFriend);
       put('allowBeep', allowBeep);
       put('allowVibration', allowVibration);
+      put('globalRecvMsgOpt', globalRecvMsgOpt);
 
       return HttpUtil.post(
         Urls.updateUserInfo,
@@ -222,7 +230,9 @@ class Apis {
         showErrorToast: showErrorToast,
       );
       if (data['users'] is List) {
-        return (data['users'] as List).map((e) => FriendInfo.fromJson(e)).toList();
+        return (data['users'] as List)
+            .map((e) => FriendInfo.fromJson(e))
+            .toList();
       }
       return [];
     } catch (e, s) {
@@ -248,7 +258,9 @@ class Apis {
         options: chatTokenOptions,
       );
       if (data['users'] is List) {
-        return (data['users'] as List).map((e) => UserFullInfo.fromJson(e)).toList();
+        return (data['users'] as List)
+            .map((e) => UserFullInfo.fromJson(e))
+            .toList();
       }
       return null;
     } catch (e, s) {
@@ -273,7 +285,9 @@ class Apis {
         options: chatTokenOptions,
       );
       if (data['users'] is List) {
-        return (data['users'] as List).map((e) => UserFullInfo.fromJson(e)).toList();
+        return (data['users'] as List)
+            .map((e) => UserFullInfo.fromJson(e))
+            .toList();
       }
       return null;
     } catch (e, s) {
@@ -316,7 +330,8 @@ class Apis {
     });
   }
 
-  static Future<SignalingCertificate> getTokenForRTC(String roomID, String userID) async {
+  static Future<SignalingCertificate> getTokenForRTC(
+      String roomID, String userID) async {
     return HttpUtil.post(
       Urls.getTokenForRTC,
       data: {
@@ -375,8 +390,160 @@ class Apis {
   }
 
   static Future<Map<String, dynamic>> getClientConfig() async {
-    return {'discoverPageURL': Config.discoverPageURL, 'allowSendMsgNotFriend': Config.allowSendMsgNotFriend};
+    final config = <String, dynamic>{
+      'discoverPageURL': Config.discoverPageURL,
+      'allowSendMsgNotFriend': Config.allowSendMsgNotFriend,
+    };
+
+    try {
+      final data = await HttpUtil.post(
+        Urls.getClientConfig,
+        data: {},
+        showErrorToast: false,
+      );
+      if (data is Map) {
+        final serverConfig =
+            data['config'] is Map ? data['config'] as Map : data;
+        for (final entry in serverConfig.entries) {
+          if (entry.key is String) config[entry.key as String] = entry.value;
+        }
+      }
+    } catch (_) {
+      // Keep the local defaults. Security-sensitive switches fail closed below.
+    }
+
+    return config;
   }
+
+  static Future<List<Map<String, dynamic>>> findApplets() async {
+    final data = await HttpUtil.post(
+      Urls.findApplets,
+      data: {},
+      options: chatTokenOptions,
+    );
+    if (data is Map && data['applets'] is List) {
+      return (data['applets'] as List)
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
+    if (data is List) {
+      return data
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    }
+    return <Map<String, dynamic>>[];
+  }
+
+  static Future<Map<String, dynamic>> _businessPost(
+    String url, [
+    Map<String, dynamic> data = const {},
+  ]) async {
+    final result = await HttpUtil.post(
+      url,
+      data: data,
+      options: chatTokenOptions,
+    );
+    return Map<String, dynamic>.from(result as Map);
+  }
+
+  static Future<Map<String, dynamic>> businessBootstrap() =>
+      _businessPost(Urls.businessBootstrap);
+
+  static Future<Map<String, dynamic>> walletSummary() =>
+      _businessPost(Urls.walletSummary);
+
+  static Future<Map<String, dynamic>> walletRechargeOptions() =>
+      _businessPost(Urls.walletRechargeOptions);
+
+  static Future<Map<String, dynamic>> walletRequests() =>
+      _businessPost(Urls.walletRequests);
+
+  static Future<Map<String, dynamic>> createRecharge({
+    required String idempotencyKey,
+    required int amountMinor,
+    required String channelID,
+    String? proofURL,
+  }) =>
+      _businessPost(Urls.walletRechargeCreate, {
+        'idempotencyKey': idempotencyKey,
+        'amountMinor': amountMinor,
+        'channelID': channelID,
+        'proofURL': proofURL,
+      });
+
+  static Future<Map<String, dynamic>> createWithdrawal({
+    required String idempotencyKey,
+    required int amountMinor,
+    required String paymentMethodID,
+  }) =>
+      _businessPost(Urls.walletWithdrawCreate, {
+        'idempotencyKey': idempotencyKey,
+        'amountMinor': amountMinor,
+        'paymentMethodID': paymentMethodID,
+      });
+
+  static Future<Map<String, dynamic>?> getKYC() async {
+    final result = await HttpUtil.post(
+      Urls.kycGet,
+      data: {},
+      options: chatTokenOptions,
+    );
+    return result == null ? null : Map<String, dynamic>.from(result as Map);
+  }
+
+  static Future<Map<String, dynamic>> submitKYC({
+    required String realName,
+    required String idNumber,
+    required String frontURL,
+    required String backURL,
+  }) =>
+      _businessPost(Urls.kycSubmit, {
+        'realName': realName,
+        'idNumber': idNumber,
+        'idCardFrontURL': frontURL,
+        'idCardBackURL': backURL,
+      });
+
+  static Future<Map<String, dynamic>> paymentMethods() =>
+      _businessPost(Urls.paymentMethodsList);
+
+  static Future<Map<String, dynamic>> savePaymentMethod({
+    String? id,
+    required String type,
+    required String accountName,
+    String? accountNo,
+    String? bankName,
+    String? qrCodeURL,
+  }) =>
+      _businessPost(Urls.paymentMethodsSave, {
+        'id': id,
+        'type': type,
+        'accountName': accountName,
+        'accountNo': accountNo,
+        'bankName': bankName,
+        'qrCodeURL': qrCodeURL,
+      });
+
+  static Future<Map<String, dynamic>> myInvitation() =>
+      _businessPost(Urls.invitationGet);
+
+  static Future<Map<String, dynamic>> loginSessions() =>
+      _businessPost(Urls.loginSessions);
+
+  static Future<Map<String, dynamic>> revokeLoginSession({
+    required String sessionID,
+    String reason = '用户主动移除设备',
+  }) =>
+      _businessPost(Urls.revokeLoginSession, {
+        'sessionID': sessionID,
+        'confirmation': '确认',
+        'reason': reason,
+      });
+
+  static Future<Map<String, dynamic>> loginAudit() =>
+      _businessPost(Urls.loginAudit);
 
   static void _catchErrorHelper(Object e, StackTrace s) {
     if (e is (int, String?)) {

@@ -17,8 +17,11 @@ class ChatNoticeView extends StatelessWidget {
       constraints: BoxConstraints(maxWidth: maxWidth),
       padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 10.h),
       decoration: BoxDecoration(
-        color: Styles.c_FFFFFF,
-        border: Border.all(color: Styles.c_E8EAEF, width: 1),
+        color: Styles.surface,
+        border: Border.all(
+          color: Styles.divider,
+          width: Styles.dividerWidth,
+        ),
         borderRadius: borderRadius(isISend),
       ),
       child: Column(
@@ -57,8 +60,12 @@ class TopNoticeView extends StatelessWidget {
       margin: EdgeInsets.only(left: 10.w, right: 10.w, top: 10.h),
       padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 10.h),
       decoration: BoxDecoration(
-        color: Styles.c_F2F8FF,
-        borderRadius: BorderRadius.circular(6.r),
+        color: Styles.primaryContainer,
+        border: Border.all(
+          color: Styles.primary.withValues(alpha: .14),
+          width: Styles.dividerWidth,
+        ),
+        borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
       ),
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
@@ -74,10 +81,19 @@ class TopNoticeView extends StatelessWidget {
                 2.horizontalSpace,
                 StrRes.groupAc.toText..style = Styles.ts_0089FF_17sp,
                 const Spacer(),
-                ImageRes.closeGroupNotice.toImage
-                  ..width = 16.w
-                  ..height = 16.h
-                  ..onTap = onClose,
+                SizedBox(
+                  width: Styles.controlHeight,
+                  height: Styles.controlHeight,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: onClose,
+                    child: Center(
+                      child: ImageRes.closeGroupNotice.toImage
+                        ..width = 16.w
+                        ..height = 16.h,
+                    ),
+                  ),
+                ),
               ],
             ),
             8.verticalSpace,

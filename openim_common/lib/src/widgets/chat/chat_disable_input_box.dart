@@ -12,7 +12,15 @@ class ChatDisableInputBox extends StatelessWidget {
     return type == 0
         ? Container(
             height: 56.h,
-            color: Styles.c_F0F2F6,
+            decoration: const BoxDecoration(
+              color: Styles.background,
+              border: Border(
+                top: BorderSide(
+                  color: Styles.divider,
+                  width: Styles.dividerWidth,
+                ),
+              ),
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -20,7 +28,8 @@ class ChatDisableInputBox extends StatelessWidget {
                   ..width = 14.w
                   ..height = 14.h,
                 6.horizontalSpace,
-                StrRes.notSendMessageNotInGroup.toText..style = Styles.ts_8E9AB0_14sp,
+                StrRes.notSendMessageNotInGroup.toText
+                  ..style = Styles.ts_8E9AB0_14sp,
               ],
             ),
           )

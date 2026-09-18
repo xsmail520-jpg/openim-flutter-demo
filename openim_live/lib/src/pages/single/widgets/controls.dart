@@ -104,7 +104,8 @@ class _ControlsViewState extends State<ControlsView> {
     _roomDidUpdateSub = widget.roomDidUpdateStream.listen(_roomDidUpdate);
     // _queryUserInfo();
 
-    _deviceChangeSub = Hardware.instance.onDeviceChange.stream.listen(_loadDevices);
+    _deviceChangeSub =
+        Hardware.instance.onDeviceChange.stream.listen(_loadDevices);
     Hardware.instance.enumerateDevices().then(_loadDevices);
     super.initState();
   }
@@ -196,7 +197,8 @@ class _ControlsViewState extends State<ControlsView> {
   }
 
   Future<void> _enableVideo() async {
-    await _participant?.setCameraEnabled(true, cameraCaptureOptions: CameraCaptureOptions(cameraPosition: position));
+    await _participant?.setCameraEnabled(true,
+        cameraCaptureOptions: CameraCaptureOptions(cameraPosition: position));
   }
 
   Future<void> _disableSpeaker() async {
@@ -246,10 +248,12 @@ class _ControlsViewState extends State<ControlsView> {
             Positioned(
               left: 16.w,
               top: 7.h,
-              child: ImageRes.liveClose.toImage
-                ..width = 30.w
-                ..height = 30.h
-                ..onTap = widget.onMinimize,
+              child: _topAction(
+                child: ImageRes.liveClose.toImage
+                  ..width = 24.w
+                  ..height = 24.h,
+                onTap: widget.onMinimize,
+              ),
             ),
             if (null != _participant)
               Positioned(
@@ -260,15 +264,24 @@ class _ControlsViewState extends State<ControlsView> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      (_participant!.isCameraEnabled() ? ImageRes.liveCameraOff : ImageRes.liveCameraOn).toImage
-                        ..width = 30.w
-                        ..height = 30.h
-                        ..onTap = (_participant!.isCameraEnabled() ? _disableVideo : _enableVideo),
-                      16.horizontalSpace,
-                      ImageRes.liveSwitchCamera.toImage
-                        ..width = 30.w
-                        ..height = 30.h
-                        ..onTap = _toggleCamera,
+                      _topAction(
+                        child: (_participant!.isCameraEnabled()
+                                ? ImageRes.liveCameraOff
+                                : ImageRes.liveCameraOn)
+                            .toImage
+                          ..width = 24.w
+                          ..height = 24.h,
+                        onTap: _participant!.isCameraEnabled()
+                            ? _disableVideo
+                            : _enableVideo,
+                      ),
+                      8.horizontalSpace,
+                      _topAction(
+                        child: ImageRes.liveSwitchCamera.toImage
+                          ..width = 24.w
+                          ..height = 24.h,
+                        onTap: _toggleCamera,
+                      ),
                     ],
                   ),
                 ),
@@ -280,15 +293,24 @@ class _ControlsViewState extends State<ControlsView> {
                 child: _userInfoView,
               ),
             Positioned(
-              bottom: 32.h,
+              bottom: 0,
               width: 1.sw,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: _buttonGroup,
+              child: Container(
+                padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 12.h),
+                decoration: BoxDecoration(
+                  color: Styles.ink.withValues(alpha: 0.94),
+                  border: const Border(
+                    top: BorderSide(color: Styles.primary, width: 2),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: _buttonGroup,
+                ),
               ),
             ),
             Positioned(
-              bottom: 156.h,
+              bottom: 132.h,
               width: 1.sw,
               child: Center(child: _videoCallingDurationView),
             ),
@@ -297,15 +319,36 @@ class _ControlsViewState extends State<ControlsView> {
         ),
       );
 
+  Widget _topAction({required Widget child, required VoidCallback? onTap}) =>
+      Material(
+        color: Styles.ink.withValues(alpha: 0.86),
+        shape: RoundedRectangleBorder(
+          side: BorderSide(color: Styles.surface.withValues(alpha: 0.36)),
+          borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
+          child: SizedBox(
+            width: Styles.controlHeight,
+            height: Styles.controlHeight,
+            child: Center(child: child),
+          ),
+        ),
+      );
+
   List<Widget> get _buttonGroup {
-    if (_callState == CallState.call || _callState == CallState.connecting && widget.initState == CallState.call) {
+    if (_callState == CallState.call ||
+        _callState == CallState.connecting &&
+            widget.initState == CallState.call) {
       return [
         LiveButton.microphone(on: _enabledMicrophone, onTap: _toggleAudio),
         LiveButton.cancel(onTap: widget.onCancel),
         LiveButton.speaker(on: _enabledSpeaker, onTap: _toggleSpeaker),
       ];
     } else if (_callState == CallState.beCalled ||
-        _callState == CallState.connecting && widget.initState == CallState.beCalled) {
+        _callState == CallState.connecting &&
+            widget.initState == CallState.beCalled) {
       return [
         LiveButton.reject(onTap: widget.onReject),
         LiveButton.pickUp(onTap: widget.onPickUp),
@@ -326,22 +369,34 @@ class _ControlsViewState extends State<ControlsView> {
 
   Widget get _videoCallingDurationView => Visibility(
         visible: isVideo && isCalling,
-        child: _callingDurationStr.toText..style = Styles.ts_FFFFFF_opacity70_17sp,
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
+          decoration: BoxDecoration(
+            color: Styles.ink.withValues(alpha: 0.84),
+            border: Border.all(color: Styles.primary),
+            borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
+          ),
+          child: _callingDurationStr.toText
+            ..style = Styles.ts_FFFFFF_opacity70_17sp,
+        ),
       );
 
   Widget get _userInfoView {
     String text;
     if (_callState == CallState.call) {
-      text = isVideo ? StrRes.waitingVideoCallHint : StrRes.waitingVoiceCallHint;
+      text =
+          isVideo ? StrRes.waitingVideoCallHint : StrRes.waitingVoiceCallHint;
     } else if (_callState == CallState.beCalled) {
-      text = isVideo ? StrRes.invitedVideoCallHint : StrRes.invitedVoiceCallHint;
+      text =
+          isVideo ? StrRes.invitedVideoCallHint : StrRes.invitedVoiceCallHint;
     } else if (_callState == CallState.connecting) {
       text = StrRes.connecting;
     } else {
       text = isVideo ? '' : _callingDurationStr;
     }
 
-    String? nickname = IMUtils.emptyStrToNull(widget.userInfo!.remark) ?? widget.userInfo!.nickname;
+    String? nickname = IMUtils.emptyStrToNull(widget.userInfo!.remark) ??
+        widget.userInfo!.nickname;
     String? faceURL = widget.userInfo!.faceURL;
 
     return Visibility(

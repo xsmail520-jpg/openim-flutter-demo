@@ -15,75 +15,87 @@ class PersonalInfoPage extends StatelessWidget {
     return Scaffold(
       appBar: TitleBar.back(
         title: StrRes.personalInfo,
+        showUnderline: true,
       ),
-      backgroundColor: Styles.c_F8F9FA,
+      backgroundColor: Styles.background,
       body: SingleChildScrollView(
-          child: Obx(
-        () => Column(
-          children: [
-            10.verticalSpace,
-            _buildCornerBgView(
-              children: [
-                _buildItemView(
-                  label: StrRes.avatar,
-                  isAvatar: true,
-                  value: logic.nickname,
-                  url: logic.faceURL,
-                ),
-                _buildItemView(
-                  label: StrRes.name,
-                  value: logic.nickname,
-                ),
-                _buildItemView(
-                  label: StrRes.gender,
-                  value: logic.isMale ? StrRes.man : StrRes.woman,
-                ),
-                _buildItemView(
-                  label: StrRes.englishName,
-                  value: logic.englishName,
-                ),
-                _buildItemView(
-                  label: StrRes.birthDay,
-                  value: logic.birth,
-                ),
-              ],
-            ),
-            10.verticalSpace,
-            _buildCornerBgView(
-              children: [
-                _buildItemView(
-                  label: StrRes.mobile,
-                  value: logic.phoneNumber,
-                  onTap: logic.clickPhoneNumber,
-                ),
-                _buildItemView(
-                  label: StrRes.email,
-                  value: logic.email,
-                  onTap: logic.clickEmail,
-                ),
-              ],
-            ),
-          ],
+        padding: EdgeInsets.symmetric(vertical: 12.h),
+        child: Obx(
+          () => Column(
+            children: [
+              _buildSectionView(
+                children: [
+                  _buildItemView(
+                    label: StrRes.avatar,
+                    isAvatar: true,
+                    value: logic.nickname,
+                    url: logic.faceURL,
+                  ),
+                  _buildItemView(label: StrRes.name, value: logic.nickname),
+                  if (logic.personalIntro != null)
+                    _buildItemView(
+                      label: StrRes.personalIntro,
+                      value: logic.personalIntro,
+                    ),
+                  _buildItemView(
+                    label: StrRes.gender,
+                    value: logic.isMale ? StrRes.man : StrRes.woman,
+                  ),
+                  _buildItemView(
+                    label: StrRes.englishName,
+                    value: logic.englishName,
+                  ),
+                  _buildItemView(label: StrRes.birthDay, value: logic.birth),
+                ],
+              ),
+              12.verticalSpace,
+              _buildSectionView(
+                children: [
+                  _buildItemView(
+                    label: StrRes.mobile,
+                    value: logic.phoneNumber,
+                    onTap: logic.clickPhoneNumber,
+                  ),
+                  _buildItemView(
+                    label: StrRes.email,
+                    value: logic.email,
+                    onTap: logic.clickEmail,
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-      )),
+      ),
     );
   }
 
-  Widget _buildCornerBgView({required List<Widget> children}) => Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w),
-        margin: EdgeInsets.symmetric(horizontal: 10.w),
-        decoration: BoxDecoration(
-          color: Styles.c_FFFFFF,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(6.r),
-            topRight: Radius.circular(6.r),
-            bottomLeft: Radius.circular(6.r),
-            bottomRight: Radius.circular(6.r),
+  /// 资料字段按信息类别分组，组内使用连续表格式行与缩进分隔。
+  Widget _buildSectionView({required List<Widget> children}) => Container(
+        decoration: const BoxDecoration(
+          color: Styles.surface,
+          border: Border.symmetric(
+            horizontal: BorderSide(
+              color: Styles.divider,
+              width: Styles.dividerWidth,
+            ),
           ),
         ),
-        child: Column(children: children),
+        child: Column(
+          children: [
+            for (var index = 0; index < children.length; index++) ...[
+              children[index],
+              if (index != children.length - 1)
+                Padding(
+                  padding: EdgeInsets.only(left: 16.w),
+                  child: const Divider(height: Styles.dividerWidth),
+                ),
+            ],
+          ],
+        ),
       );
 
+  /// 固定标签列并约束长值换行，保证头像与可拨打字段仍使用原回调。
   Widget _buildItemView({
     required String label,
     String? value,
@@ -91,25 +103,40 @@ class PersonalInfoPage extends StatelessWidget {
     bool isAvatar = false,
     Function()? onTap,
   }) =>
-      GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: onTap,
-        child: SizedBox(
-          height: 46.h,
-          child: Row(
-            children: [
-              label.toText..style = Styles.ts_0C1C33_17sp,
-              const Spacer(),
-              if (null != value && !isAvatar) value.toText..style = Styles.ts_0C1C33_17sp,
-              if (isAvatar)
-                AvatarView(
-                  width: 32.w,
-                  height: 32.h,
-                  url: url,
-                  text: value,
-                  textStyle: Styles.ts_FFFFFF_10sp,
+      Material(
+        color: Styles.surface,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            constraints: BoxConstraints(minHeight: isAvatar ? 68.h : 56.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 104.w,
+                  child: label.toText..style = Styles.ts_8E9AB0_16sp,
                 ),
-            ],
+                if (null != value && !isAvatar)
+                  Expanded(
+                    child: value.toText
+                      ..style = Styles.ts_0C1C33_17sp
+                      ..textAlign = TextAlign.right,
+                  ),
+                if (isAvatar)
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: AvatarView(
+                        width: 42.w,
+                        height: 42.h,
+                        url: url,
+                        text: value,
+                        textStyle: Styles.ts_FFFFFF_12sp,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       );

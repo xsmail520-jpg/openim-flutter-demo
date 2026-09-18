@@ -26,7 +26,8 @@ class VoiceRecord {
     this.onDuration,
   }) : _tag = _now();
 
-  start() async {
+  /// 仅在麦克风已获授权且录音器真正启动后返回 true，调用方据此更新 UI 状态。
+  Future<bool> start() async {
     if (await _audioRecorder.hasPermission()) {
       var path = (await getApplicationDocumentsDirectory()).path;
       _path = '$path/$_dir/$_tag$_ext';
@@ -46,7 +47,9 @@ class VoiceRecord {
           onInterrupt(maxRecordSec, _path);
         }
       });
+      return true;
     }
+    return false;
   }
 
   stop({bool isInterrupt = false}) async {

@@ -16,77 +16,103 @@ class MyInfoPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: TitleBar.back(
-        title: StrRes.myInfo,
+      appBar: TitleBar.back(title: StrRes.myInfo),
+      backgroundColor: Styles.background,
+      body: Obx(
+        () => SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(16.w, 16.h, 16.w, 24.h),
+          child: Column(
+            children: [
+              _buildSection(
+                showAccent: true,
+                children: [
+                  _buildItemView(
+                    label: StrRes.avatar,
+                    isAvatar: true,
+                    value: imLogic.userInfo.value.nickname,
+                    url: imLogic.userInfo.value.faceURL,
+                    onTap: logic.openPhotoSheet,
+                  ),
+                  _buildItemView(
+                    label: StrRes.name,
+                    value: imLogic.userInfo.value.nickname,
+                    onTap: logic.editMyName,
+                  ),
+                  _buildItemView(
+                    label: StrRes.personalIntro,
+                    value: IMUtils.emptyStrToNull(imLogic.userInfo.value.ex) ??
+                        StrRes.noPersonalIntro,
+                    onTap: logic.editPersonalIntro,
+                  ),
+                  _buildItemView(
+                    label: StrRes.gender,
+                    value: imLogic.userInfo.value.isMale
+                        ? StrRes.man
+                        : StrRes.woman,
+                    onTap: logic.selectGender,
+                  ),
+                  _buildItemView(
+                    label: StrRes.birthDay,
+                    value: DateUtil.formatDateMs(
+                      imLogic.userInfo.value.birth ?? 0,
+                      format: IMUtils.getTimeFormat1(),
+                    ),
+                    onTap: logic.openDatePicker,
+                    showDivider: false,
+                  ),
+                ],
+              ),
+              12.verticalSpace,
+              _buildSection(
+                children: [
+                  _buildItemView(
+                    label: StrRes.mobile,
+                    value: imLogic.userInfo.value.phoneNumber,
+                    showRightArrow: false,
+                  ),
+                  _buildItemView(
+                    label: StrRes.email,
+                    value: imLogic.userInfo.value.email,
+                    onTap: logic.editEmail,
+                  ),
+                  _buildItemView(
+                    label: StrRes.imchatID,
+                    value: imLogic.userInfo.value.userID,
+                    showRightArrow: false,
+                    onTap: logic.copyID,
+                  ),
+                  _buildItemView(
+                    label: StrRes.changeLoginPassword,
+                    onTap: logic.changePassword,
+                    showDivider: false,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
       ),
-      backgroundColor: Styles.c_F8F9FA,
-      body: Obx(() => SingleChildScrollView(
-            child: Column(
-              children: [
-                10.verticalSpace,
-                _buildCornerBgView(
-                  children: [
-                    _buildItemView(
-                      label: StrRes.avatar,
-                      isAvatar: true,
-                      value: imLogic.userInfo.value.nickname,
-                      url: imLogic.userInfo.value.faceURL,
-                      onTap: logic.openPhotoSheet,
-                    ),
-                    _buildItemView(
-                      label: StrRes.name,
-                      value: imLogic.userInfo.value.nickname,
-                      onTap: logic.editMyName,
-                    ),
-                    _buildItemView(
-                      label: StrRes.gender,
-                      value: imLogic.userInfo.value.isMale ? StrRes.man : StrRes.woman,
-                      onTap: logic.selectGender,
-                    ),
-                    _buildItemView(
-                      label: StrRes.birthDay,
-                      value: DateUtil.formatDateMs(
-                        imLogic.userInfo.value.birth ?? 0,
-                        format: IMUtils.getTimeFormat1(),
-                      ),
-                      onTap: logic.openDatePicker,
-                    ),
-                  ],
-                ),
-                10.verticalSpace,
-                _buildCornerBgView(
-                  children: [
-                    _buildItemView(
-                      label: StrRes.mobile,
-                      value: imLogic.userInfo.value.phoneNumber,
-                      showRightArrow: false,
-                    ),
-                    _buildItemView(
-                      label: StrRes.email,
-                      value: imLogic.userInfo.value.email,
-                      onTap: logic.editEmail,
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          )),
     );
   }
 
-  Widget _buildCornerBgView({required List<Widget> children}) => Container(
-        padding: EdgeInsets.symmetric(horizontal: 16.w),
-        margin: EdgeInsets.symmetric(horizontal: 10.w),
+  /// 资料字段按身份信息与联系方式分组，使用细边框和连续分隔行。
+  Widget _buildSection({
+    required List<Widget> children,
+    bool showAccent = false,
+  }) =>
+      Container(
+        clipBehavior: Clip.antiAlias,
         decoration: BoxDecoration(
-          color: Styles.c_FFFFFF,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(6.r),
-            topRight: Radius.circular(6.r),
-            bottomLeft: Radius.circular(6.r),
-            bottomRight: Radius.circular(6.r),
-          ),
+          color: Styles.surface,
+          borderRadius: BorderRadius.circular(6.r),
+          border: Border.all(color: Styles.divider),
         ),
-        child: Column(children: children),
+        child: Column(
+          children: [
+            if (showAccent) Container(height: 3.h, color: Styles.primary),
+            ...children,
+          ],
+        ),
       );
 
   Widget _buildItemView({
@@ -95,38 +121,53 @@ class MyInfoPage extends StatelessWidget {
     String? url,
     bool isAvatar = false,
     bool showRightArrow = true,
+    bool showDivider = true,
     Function()? onTap,
   }) =>
-      GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onTap: showRightArrow ? onTap : null,
-        child: SizedBox(
-          height: 46.h,
-          child: Row(
-            children: [
-              label.toText..style = Styles.ts_0C1C33_17sp,
-              const Spacer(),
-              if (isAvatar)
-                AvatarView(
-                  width: 32.w,
-                  height: 32.h,
-                  url: url,
-                  text: value,
-                  textStyle: Styles.ts_FFFFFF_10sp,
-                )
-              else
+      Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: Container(
+            constraints: BoxConstraints(minHeight: isAvatar ? 76.h : 58.h),
+            padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+            decoration: BoxDecoration(
+              border: showDivider
+                  ? Border(bottom: BorderSide(color: Styles.divider))
+                  : null,
+            ),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 82.w,
+                  child: label.toText..style = Styles.ts_0C1C33_17sp,
+                ),
                 Expanded(
-                    flex: 3,
-                    child: (IMUtils.emptyStrToNull(value) ?? '').toText
-                      ..style = Styles.ts_0C1C33_17sp
-                      ..maxLines = 1
-                      ..overflow = TextOverflow.ellipsis
-                      ..textAlign = TextAlign.right),
-              if (showRightArrow)
-                ImageRes.rightArrow.toImage
-                  ..width = 24.w
-                  ..height = 24.h,
-            ],
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: isAvatar
+                        ? AvatarView(
+                            width: 48.w,
+                            height: 48.h,
+                            url: url,
+                            text: value,
+                            textStyle: Styles.ts_FFFFFF_10sp,
+                          )
+                        : ((IMUtils.emptyStrToNull(value) ?? '').toText
+                          ..style = Styles.ts_8E9AB0_17sp
+                          ..maxLines = 1
+                          ..overflow = TextOverflow.ellipsis
+                          ..textAlign = TextAlign.right),
+                  ),
+                ),
+                if (showRightArrow) ...[
+                  6.horizontalSpace,
+                  ImageRes.rightArrow.toImage
+                    ..width = 24.w
+                    ..height = 24.h,
+                ],
+              ],
+            ),
           ),
         ),
       );

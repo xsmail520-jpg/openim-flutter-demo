@@ -16,13 +16,13 @@ class BottomBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 56.h,
+      height: 60.h,
       decoration: BoxDecoration(
-        color: Styles.c_FFFFFF,
-        border: BorderDirectional(
+        color: Styles.surface,
+        border: const BorderDirectional(
           top: BorderSide(
-            color: Styles.c_E8EAEF,
-            width: 1,
+            color: Styles.divider,
+            width: Styles.dividerWidth,
           ),
         ),
       ),
@@ -37,37 +37,49 @@ class BottomBar extends StatelessWidget {
     );
   }
 
-  Widget _buildItemView({required int i, required BottomBarItem item}) => Expanded(
-        child: GestureDetector(
-          onDoubleTap: () => item.onDoubleClick?.call(i),
-          onTapDown: (_) => item.onClick?.call(i),
-          child: Container(
-            color: Styles.c_FFFFFF,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    (i == index ? item.selectedImgRes.toImage : item.unselectedImgRes.toImage)
-                      ..width = item.imgWidth
-                      ..height = item.imgHeight,
-                    Positioned(
-                      top: 0,
-                      right: 0,
-                      child: Transform.translate(
-                        offset: const Offset(2, -2),
-                        child: UnreadCountView(count: item.count ?? 0),
+  Widget _buildItemView({required int i, required BottomBarItem item}) =>
+      Expanded(
+        child: Material(
+          color: Styles.surface,
+          child: InkWell(
+            onDoubleTap: () => item.onDoubleClick?.call(i),
+            onTap: () => item.onClick?.call(i),
+            splashColor: Styles.primary.withValues(alpha: .05),
+            highlightColor: Styles.primary.withValues(alpha: .03),
+            child: Container(
+              constraints: const BoxConstraints(
+                minHeight: Styles.controlHeight,
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      (i == index
+                          ? item.selectedImgRes.toImage
+                          : item.unselectedImgRes.toImage)
+                        ..width = item.imgWidth
+                        ..height = item.imgHeight,
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: Transform.translate(
+                          offset: const Offset(2, -2),
+                          child: UnreadCountView(count: item.count ?? 0),
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                4.verticalSpace,
-                item.label.toText
-                  ..style = i == index
-                      ? (item.selectedStyle ?? Styles.ts_0089FF_10sp_semibold)
-                      : (item.unselectedStyle ?? Styles.ts_8E9AB0_10sp_semibold),
-              ],
+                    ],
+                  ),
+                  4.verticalSpace,
+                  item.label.toText
+                    ..style = i == index
+                        ? (item.selectedStyle ??
+                            Styles.ts_0089FF_12sp
+                                .copyWith(fontWeight: FontWeight.w600))
+                        : (item.unselectedStyle ?? Styles.ts_8E9AB0_12sp),
+                ],
+              ),
             ),
           ),
         ),

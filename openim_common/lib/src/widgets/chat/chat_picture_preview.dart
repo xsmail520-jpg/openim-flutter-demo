@@ -11,7 +11,9 @@ class ChatPicturePreview extends StatelessWidget {
     this.heroTag,
     this.onTap,
     this.onLongPress,
-  })  : controller = images.length > 1 ? ExtendedPageController(initialPage: currentIndex, pageSpacing: 50) : null,
+  })  : controller = images.length > 1
+            ? ExtendedPageController(initialPage: currentIndex, pageSpacing: 50)
+            : null,
         super(key: key);
   final int currentIndex;
   final List<MediaSource> images;
@@ -19,25 +21,62 @@ class ChatPicturePreview extends StatelessWidget {
   final Function()? onTap;
   final Function(String url)? onLongPress;
   final ExtendedPageController? controller;
-  GlobalKey<ExtendedImageSlidePageState> slidePagekey = GlobalKey<ExtendedImageSlidePageState>();
+  GlobalKey<ExtendedImageSlidePageState> slidePagekey =
+      GlobalKey<ExtendedImageSlidePageState>();
   @override
   Widget build(BuildContext context) {
     return ExtendedImageSlidePage(
       key: slidePagekey,
       slideAxis: SlideAxis.vertical,
-      slidePageBackgroundHandler: (offset, pageSize) => defaultSlidePageBackgroundHandler(
-        color: Colors.black,
+      slidePageBackgroundHandler: (offset, pageSize) =>
+          defaultSlidePageBackgroundHandler(
+        color: Styles.ink,
         offset: offset,
         pageSize: pageSize,
       ),
-      child: MetaHero(
-        heroTag: heroTag,
-        onTap: onTap ?? () => Get.back(),
-        onLongPress: () {
-          final index = controller?.page?.round() ?? 0;
-          onLongPress?.call(images[index].url!);
-        },
-        child: _childView,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: MetaHero(
+              heroTag: heroTag,
+              onTap: onTap ?? () => Get.back(),
+              onLongPress: () {
+                final index = controller?.page?.round() ?? 0;
+                onLongPress?.call(images[index].url!);
+              },
+              child: _childView,
+            ),
+          ),
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Semantics(
+                button: true,
+                label: MaterialLocalizations.of(context).closeButtonLabel,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => Get.back(),
+                    borderRadius: BorderRadius.circular(Styles.radiusSmall),
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      margin: const EdgeInsets.all(12),
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Styles.ink.withValues(alpha: 0.86),
+                        border: Border.all(color: Styles.divider),
+                        borderRadius: BorderRadius.circular(Styles.radiusSmall),
+                      ),
+                      child: const Icon(Icons.close,
+                          color: Styles.surface, size: 22),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -80,9 +119,11 @@ class ChatPicturePreview extends StatelessWidget {
                   return null;
                 }
                 final ImageChunkEvent? loadingProgress = state.loadingProgress;
-                final double? progress = loadingProgress?.expectedTotalBytes != null
-                    ? loadingProgress!.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
-                    : null;
+                final double? progress =
+                    loadingProgress?.expectedTotalBytes != null
+                        ? loadingProgress!.cumulativeBytesLoaded /
+                            loadingProgress.expectedTotalBytes!
+                        : null;
 
                 return SizedBox(
                   width: 15.0,
@@ -98,7 +139,7 @@ class ChatPicturePreview extends StatelessWidget {
               }
             case LoadState.completed:
               final url = source.url;
-   
+
               return Center(
                 child: ExtendedImage.network(url!),
               );

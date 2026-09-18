@@ -16,8 +16,8 @@ class SetPasswordPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            StrRes.setInfo.toText..style = Styles.ts_0089FF_22sp_semibold,
-            29.verticalSpace,
+            RegisterPageTitle(StrRes.setInfo),
+            28.verticalSpace,
             InputBox(
               label: StrRes.nickname,
               hintText: StrRes.plsEnterYourNickname,
@@ -38,7 +38,7 @@ class SetPasswordPage extends StatelessWidget {
               controller: logic.pwdAgainCtrl,
               inputFormatters: [IMUtils.getPasswordFormatter()],
             ),
-            129.verticalSpace,
+            40.verticalSpace,
             Obx(() => Button(
                   text: StrRes.registerNow,
                   enabled: logic.enabled.value,

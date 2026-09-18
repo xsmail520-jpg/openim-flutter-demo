@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_openim_sdk/flutter_openim_sdk.dart';
 import 'package:openim_common/openim_common.dart';
 import 'package:sprintf/sprintf.dart';
@@ -10,12 +12,18 @@ class DataSp {
   static const _ip = 'ip';
   static const _deviceID = 'deviceID';
   static const _ignoreUpdate = 'ignoreUpdate';
+  static const _privacyConsentVersion = 'privacyConsentVersion';
+  static const privacyConsentVersion = '20260816-1';
   static const _language = "language";
   static const _groupApplication = "%s_groupApplication";
   static const _friendApplication = "%s_friendApplication";
 
   static const _screenPassword = '%s_screenPassword';
   static const _enabledBiometric = '%s_enabledBiometric';
+  static const _notificationPreview = '%s_notificationPreview';
+  static const _showUnreadBadge = '%s_showUnreadBadge';
+  static const _cacheRetentionDays = '%s_cacheRetentionDays';
+  static const _favorites = '%s_favorites';
   static const _chatFontSizeFactor = '%s_chatFontSizeFactor';
   static const _chatBackground = '%s_chatBackground_%s';
   static const _loginType = 'loginType';
@@ -46,7 +54,8 @@ class DataSp {
   }
 
   static LoginCertificate? getLoginCertificate() {
-    return SpUtil().getObj(_loginCertificate, (v) => LoginCertificate.fromJson(v.cast()));
+    return SpUtil()
+        .getObj(_loginCertificate, (v) => LoginCertificate.fromJson(v.cast()));
   }
 
   static Future<bool>? removeLoginCertificate() {
@@ -90,6 +99,14 @@ class DataSp {
     return SpUtil().getString(_ignoreUpdate);
   }
 
+  static bool hasPrivacyConsent() {
+    return SpUtil().getString(_privacyConsentVersion) == privacyConsentVersion;
+  }
+
+  static Future<bool>? putPrivacyConsent() {
+    return SpUtil().putString(_privacyConsentVersion, privacyConsentVersion);
+  }
+
   static Future<bool>? putLanguage(int index) {
     return SpUtil().putInt(_language, index);
   }
@@ -98,11 +115,13 @@ class DataSp {
     return SpUtil().getInt(_language);
   }
 
-  static Future<bool>? putHaveReadUnHandleGroupApplication(List<String> idList) {
+  static Future<bool>? putHaveReadUnHandleGroupApplication(
+      List<String> idList) {
     return SpUtil().putStringList(getKey(_groupApplication), idList);
   }
 
-  static Future<bool>? putHaveReadUnHandleFriendApplication(List<String> idList) {
+  static Future<bool>? putHaveReadUnHandleFriendApplication(
+      List<String> idList) {
     return SpUtil().putStringList(getKey(_friendApplication), idList);
   }
 
@@ -136,6 +155,59 @@ class DataSp {
 
   static Future<bool>? closeBiometric() {
     return SpUtil().remove(getKey(_enabledBiometric));
+  }
+
+  static bool getNotificationPreview() {
+    return SpUtil().getBool(
+          getKey(_notificationPreview),
+          defValue: true,
+        ) ??
+        true;
+  }
+
+  static Future<bool>? putNotificationPreview(bool value) {
+    return SpUtil().putBool(getKey(_notificationPreview), value);
+  }
+
+  static bool getShowUnreadBadge() {
+    return SpUtil().getBool(
+          getKey(_showUnreadBadge),
+          defValue: true,
+        ) ??
+        true;
+  }
+
+  static Future<bool>? putShowUnreadBadge(bool value) {
+    return SpUtil().putBool(getKey(_showUnreadBadge), value);
+  }
+
+  /// Retention applies only to app cache files, never the SDK database or
+  /// account credentials. Zero means keep cached files indefinitely.
+  static int getCacheRetentionDays() {
+    return SpUtil().getInt(getKey(_cacheRetentionDays), defValue: 0) ?? 0;
+  }
+
+  static Future<bool>? putCacheRetentionDays(int days) {
+    return SpUtil().putInt(getKey(_cacheRetentionDays), days);
+  }
+
+  static List<Map<String, dynamic>> getFavoriteItems() {
+    final raw = SpUtil().getString(getKey(_favorites));
+    if (raw == null || raw.isEmpty) return <Map<String, dynamic>>[];
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return <Map<String, dynamic>>[];
+      return decoded
+          .whereType<Map>()
+          .map((item) => Map<String, dynamic>.from(item))
+          .toList();
+    } catch (_) {
+      return <Map<String, dynamic>>[];
+    }
+  }
+
+  static Future<bool>? putFavoriteItems(List<Map<String, dynamic>> items) {
+    return SpUtil().putString(getKey(_favorites), jsonEncode(items));
   }
 
   static Future<bool>? putChatFontSizeFactor(double factor) {

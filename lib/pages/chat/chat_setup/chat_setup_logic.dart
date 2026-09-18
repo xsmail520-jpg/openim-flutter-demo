@@ -21,6 +21,8 @@ class ChatSetupLogic extends GetxController {
 
   bool get isPinned => conversationInfo.value.isPinned == true;
 
+  bool get isNotDisturb => conversationInfo.value.recvMsgOpt != 0;
+
   @override
   void onClose() {
     ccSub.cancel();
@@ -31,11 +33,14 @@ class ChatSetupLogic extends GetxController {
   @override
   void onInit() {
     conversationInfo = Rx(Get.arguments['conversationInfo']);
-    final sourceID = conversationInfo.value.conversationType == ConversationType.single
-        ? conversationInfo.value.userID
-        : conversationInfo.value.groupID;
+    final sourceID =
+        conversationInfo.value.conversationType == ConversationType.single
+            ? conversationInfo.value.userID
+            : conversationInfo.value.groupID;
     OpenIM.iMManager.conversationManager
-        .getOneConversation(sourceID: sourceID!, sessionType: conversationInfo.value.conversationType!)
+        .getOneConversation(
+            sourceID: sourceID!,
+            sessionType: conversationInfo.value.conversationType!)
         .then((value) {
       conversationInfo.value = value;
     });
@@ -83,4 +88,17 @@ class ChatSetupLogic extends GetxController {
         nickname: conversationInfo.value.showName,
         faceURL: conversationInfo.value.faceURL,
       );
+
+  Future<void> setNotDisturb(bool enabled) async {
+    final status = enabled ? 1 : 0;
+    try {
+      await OpenIM.iMManager.conversationManager.setConversationRecvMessageOpt(
+        conversationID: conversationID,
+        status: status,
+      );
+      conversationInfo.update((info) => info?.recvMsgOpt = status);
+    } catch (_) {
+      IMViews.showToast(StrRes.settingsUpdateFailed);
+    }
+  }
 }

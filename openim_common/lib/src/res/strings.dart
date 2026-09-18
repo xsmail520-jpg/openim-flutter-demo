@@ -4,6 +4,8 @@ import 'package:get/get.dart';
 
 import 'lang/en_US.dart';
 import 'lang/zh_CN.dart';
+import 'lang/zh_TW.dart';
+import 'lang/vi_VN.dart';
 
 class TranslationService extends Translations {
   static Locale? get locale => Get.deviceLocale;
@@ -13,6 +15,8 @@ class TranslationService extends Translations {
   Map<String, Map<String, String>> get keys => {
         'en_US': en_US,
         'zh_CN': zh_CN,
+        'zh_TW': zh_TW,
+        'vi_VN': vi_VN,
       };
 }
 
@@ -40,7 +44,35 @@ class StrRes {
 
   static String get verificationCodeLogin => 'verificationCodeLogin'.tr;
 
+  static String get verificationCodeLoginDisabled =>
+      'verificationCodeLoginDisabled'.tr;
+
   static String get login => 'login'.tr;
+
+  static String get privacyConsentTitle => 'privacyConsentTitle'.tr;
+
+  static String get privacyConsentSummary => 'privacyConsentSummary'.tr;
+
+  static String get privacyConsentAccount => 'privacyConsentAccount'.tr;
+
+  static String get privacyConsentMessages => 'privacyConsentMessages'.tr;
+
+  static String get privacyConsentDevice => 'privacyConsentDevice'.tr;
+
+  static String get privacyConsentPermissions => 'privacyConsentPermissions'.tr;
+
+  static String get privacyConsentThirdParty => 'privacyConsentThirdParty'.tr;
+
+  static String get privacyConsentRights => 'privacyConsentRights'.tr;
+
+  static String get privacyConsentPolicyLink => 'privacyConsentPolicyLink'.tr;
+
+  static String get privacyConsentAgreementLink =>
+      'privacyConsentAgreementLink'.tr;
+
+  static String get privacyConsentDecline => 'privacyConsentDecline'.tr;
+
+  static String get privacyConsentAgree => 'privacyConsentAgree'.tr;
 
   static String get noAccountYet => 'noAccountYet'.tr;
 
@@ -58,7 +90,8 @@ class StrRes {
 
   static String get resendVerificationCode => 'resendVerificationCode'.tr;
 
-  static String get verificationCodeTimingReminder => 'verificationCodeTimingReminder'.tr;
+  static String get verificationCodeTimingReminder =>
+      'verificationCodeTimingReminder'.tr;
 
   static String get defaultVerificationCode => 'defaultVerificationCode'.tr;
 
@@ -103,6 +136,21 @@ class StrRes {
   static String get contacts => 'contacts'.tr;
 
   static String get workbench => 'workbench'.tr;
+
+  static String get discoverScan => 'discoverScan'.tr;
+  static String get discoverApps => 'discoverApps'.tr;
+  static String get discoverEmpty => 'discoverEmpty'.tr;
+  static String get discoverLoadFailed => 'discoverLoadFailed'.tr;
+  static String get openLink => 'openLink'.tr;
+  static String get linkUnavailable => 'linkUnavailable'.tr;
+  static String get scanTitle => 'scanTitle'.tr;
+  static String get scanHint => 'scanHint'.tr;
+  static String get scanUnsupported => 'scanUnsupported'.tr;
+  static String get scanUserFound => 'scanUserFound'.tr;
+  static String get scanGroupFound => 'scanGroupFound'.tr;
+  static String get cameraPermissionRequired => 'cameraPermissionRequired'.tr;
+  static String get flipCamera => 'flipCamera'.tr;
+  static String get toggleFlash => 'toggleFlash'.tr;
 
   static String get mine => 'mine'.tr;
 
@@ -257,6 +305,8 @@ class StrRes {
   static String get determine => 'determine'.tr;
 
   static String get toolboxAlbum => 'toolboxAlbum'.tr;
+  static String get toolboxEmoji => 'toolboxEmoji'.tr;
+  static String get toolboxVoice => 'toolboxVoice'.tr;
 
   static String get toolboxCall => 'toolboxCall'.tr;
 
@@ -267,6 +317,7 @@ class StrRes {
   static String get toolboxFile => 'toolboxFile'.tr;
 
   static String get toolboxLocation => 'toolboxLocation'.tr;
+  static String get videoLoadFailed => 'videoLoadFailed'.tr;
 
   static String get toolboxDirectionalMessage => 'toolboxDirectionalMessage'.tr;
 
@@ -276,7 +327,8 @@ class StrRes {
 
   static String get releaseToSend => 'releaseToSend'.tr;
 
-  static String get releaseToSendSwipeUpToCancel => 'releaseToSendSwipeUpToCancel'.tr;
+  static String get releaseToSendSwipeUpToCancel =>
+      'releaseToSendSwipeUpToCancel'.tr;
 
   static String get liftFingerToCancelSend => 'liftFingerToCancelSend'.tr;
 
@@ -370,6 +422,22 @@ class StrRes {
 
   static String get qrcodeHint => 'qrcodeHint'.tr;
 
+  static String get myQrcode => 'myQrcode'.tr;
+  static String get personalIntro => 'personalIntro'.tr;
+  static String get noPersonalIntro => 'noPersonalIntro'.tr;
+  static String get introEditHint => 'introEditHint'.tr;
+  static String get saveQrcode => 'saveQrcode'.tr;
+  static String get shareQrcode => 'shareQrcode'.tr;
+  static String get qrcodeSaved => 'qrcodeSaved'.tr;
+  static String get qrcodeSaveFailed => 'qrcodeSaveFailed'.tr;
+  static String get qrcodeShared => 'qrcodeShared'.tr;
+  static String get qrcodeShareFailed => 'qrcodeShareFailed'.tr;
+  static String get qrcodeNoRecipient => 'qrcodeNoRecipient'.tr;
+  static String get qrcodeShareTitle => 'qrcodeShareTitle'.tr;
+  static String get imchatID => 'imchatID'.tr;
+  static String get notSet => 'notSet'.tr;
+  static String get favorite => 'favorite'.tr;
+
   static String get favoriteFace => 'favoriteFace'.tr;
 
   static String get favoriteManage => 'favoriteManage'.tr;
@@ -377,6 +445,11 @@ class StrRes {
   static String get favoriteCount => 'favoriteCount'.tr;
 
   static String get favoriteDel => 'favoriteDel'.tr;
+
+  static String get favorites => 'favorites'.tr;
+  static String get favoritesEmpty => 'favoritesEmpty'.tr;
+  static String get favoriteAdded => 'favoriteAdded'.tr;
+  static String get favoriteRemoved => 'favoriteRemoved'.tr;
 
   static String get hasRead => 'hasRead'.tr;
 
@@ -400,13 +473,15 @@ class StrRes {
 
   static String get myFriend => 'myFriend'.tr;
 
+  static String get noFriendYet => 'noFriendYet'.tr;
+
   static String get myGroup => 'myGroup'.tr;
+
+  static String get noGroupYet => 'noGroupYet'.tr;
 
   static String get add => 'add'.tr;
 
   static String get scan => 'scan'.tr;
-
-  static String get scanHint => 'scanHint'.tr;
 
   static String get addFriend => 'addFriend'.tr;
 
@@ -560,6 +635,27 @@ class StrRes {
 
   static String get changePassword => 'changePassword'.tr;
 
+  static String get changeLoginPassword => 'changeLoginPassword'.tr;
+  static String get passwordChanged => 'passwordChanged'.tr;
+  static String get passwordChangeFailed => 'passwordChangeFailed'.tr;
+  static String get passwordNotSame => 'passwordNotSame'.tr;
+
+  static String get privacySecurity => 'privacySecurity'.tr;
+  static String get allowAddFriend => 'allowAddFriend'.tr;
+  static String get lockCode => 'lockCode'.tr;
+  static String get lockCodeEnabled => 'lockCodeEnabled'.tr;
+  static String get lockCodeDisabled => 'lockCodeDisabled'.tr;
+  static String get setLockCode => 'setLockCode'.tr;
+  static String get removeLockCode => 'removeLockCode'.tr;
+  static String get lockCodeHint => 'lockCodeHint'.tr;
+  static String get lockCodeInvalid => 'lockCodeInvalid'.tr;
+  static String get removeLockCodeHint => 'removeLockCodeHint'.tr;
+  static String get lockCodeDescription => 'lockCodeDescription'.tr;
+  static String get biometricUnlock => 'biometricUnlock'.tr;
+  static String get biometricRequiresLockCode => 'biometricRequiresLockCode'.tr;
+  static String get biometricUnavailable => 'biometricUnavailable'.tr;
+  static String get settingsUpdateFailed => 'settingsUpdateFailed'.tr;
+
   static String get clearChatHistory => 'clearChatHistory'.tr;
 
   static String get confirmClearChatHistory => 'confirmClearChatHistory'.tr;
@@ -573,6 +669,34 @@ class StrRes {
   static String get chinese => 'chinese'.tr;
 
   static String get followSystem => 'followSystem'.tr;
+  static String get traditionalChinese => 'traditionalChinese'.tr;
+  static String get vietnamese => 'vietnamese'.tr;
+
+  static String get notificationSettings => 'notificationSettings'.tr;
+  static String get messageNotifications => 'messageNotifications'.tr;
+  static String get displayNotifications => 'displayNotifications'.tr;
+  static String get notificationPreview => 'notificationPreview'.tr;
+  static String get notificationSound => 'notificationSound'.tr;
+  static String get notificationVibration => 'notificationVibration'.tr;
+  static String get unreadBadge => 'unreadBadge'.tr;
+  static String get notificationSettingsHint => 'notificationSettingsHint'.tr;
+  static String get conversationNotificationHint =>
+      'conversationNotificationHint'.tr;
+
+  static String get dataStorage => 'dataStorage'.tr;
+  static String get storageUsage => 'storageUsage'.tr;
+  static String get appCache => 'appCache'.tr;
+  static String get serviceData => 'serviceData'.tr;
+  static String get clearCache => 'clearCache'.tr;
+  static String get clearCacheConfirm => 'clearCacheConfirm'.tr;
+  static String get cacheCleared => 'cacheCleared'.tr;
+  static String get cacheRetention => 'cacheRetention'.tr;
+  static String get cacheRetentionForever => 'cacheRetentionForever'.tr;
+  static String get cacheRetentionSevenDays => 'cacheRetentionSevenDays'.tr;
+  static String get cacheRetentionThirtyDays => 'cacheRetentionThirtyDays'.tr;
+  static String get cacheRetentionHint => 'cacheRetentionHint'.tr;
+  static String get cacheBreakdown => 'cacheBreakdown'.tr;
+  static String get bytesUnit => 'bytesUnit'.tr;
 
   static String get blacklistEmpty => 'blacklistEmpty'.tr;
 
@@ -704,7 +828,8 @@ class StrRes {
 
   static String get confirm => 'confirm'.tr;
 
-  static String get confirmTransferGroupToUser => 'confirmTransferGroupToUser'.tr;
+  static String get confirmTransferGroupToUser =>
+      'confirmTransferGroupToUser'.tr;
 
   static String get removeGroupMember => 'removeGroupMember'.tr;
 
@@ -960,7 +1085,8 @@ class StrRes {
 
   static String get confirmTheChanges => 'confirmTheChanges'.tr;
 
-  static String get invitesYouToVideoConference => 'invitesYouToVideoConference'.tr;
+  static String get invitesYouToVideoConference =>
+      'invitesYouToVideoConference'.tr;
 
   static String get over => 'over'.tr;
 
@@ -1064,7 +1190,8 @@ class StrRes {
 
   static String get sendAnother => 'sendAnother'.tr;
 
-  static String get confirmDelTagNotificationHint => 'confirmDelTagNotificationHint'.tr;
+  static String get confirmDelTagNotificationHint =>
+      'confirmDelTagNotificationHint'.tr;
 
   static String get contentNotBlank => 'contentNotBlank'.tr;
 
@@ -1076,11 +1203,13 @@ class StrRes {
 
   static String get groupRequestHandled => 'groupRequestHandled'.tr;
 
-  static String get burnAfterReadingDescription => 'burnAfterReadingDescription'.tr;
+  static String get burnAfterReadingDescription =>
+      'burnAfterReadingDescription'.tr;
 
   static String get periodicallyDeleteMessage => 'periodicallyDeleteMessage'.tr;
 
-  static String get periodicallyDeleteMessageDescription => 'periodicallyDeleteMessageDescription'.tr;
+  static String get periodicallyDeleteMessageDescription =>
+      'periodicallyDeleteMessageDescription'.tr;
 
   static String get nDay => 'nDay'.tr;
 
@@ -1158,4 +1287,106 @@ class StrRes {
   static String get otherNetworkNotStableHint => 'otherNetworkNotStableHint'.tr;
   static String get callingInterruption => 'callingInterruption'.tr;
   static String get directedTo => 'directedTo'.tr;
+  static String get checkingNetwork => 'checkingNetwork'.tr;
+  static String get connectingNetworkAcceleration =>
+      'connectingNetworkAcceleration'.tr;
+  static String get networkAccelerationPermissionRequired =>
+      'networkAccelerationPermissionRequired'.tr;
+  static String get networkAccelerationNotConfigured =>
+      'networkAccelerationNotConfigured'.tr;
+  static String get networkUnavailableRetry => 'networkUnavailableRetry'.tr;
+  static String get retryConnection => 'retryConnection'.tr;
+
+  static String get businessDataLoadFailed => 'businessDataLoadFailed'.tr;
+  static String get businessWalletAndIdentity => 'businessWalletAndIdentity'.tr;
+  static String get businessWalletBalance => 'businessWalletBalance'.tr;
+  static String get businessRecharge => 'businessRecharge'.tr;
+  static String get businessWithdraw => 'businessWithdraw'.tr;
+  static String get businessKyc => 'businessKyc'.tr;
+  static String get businessReviewRemark => 'businessReviewRemark'.tr;
+  static String get businessSubmitIdentity => 'businessSubmitIdentity'.tr;
+  static String get businessResubmit => 'businessResubmit'.tr;
+  static String get businessWithdrawalPaymentMethod =>
+      'businessWithdrawalPaymentMethod'.tr;
+  static String get businessNoPaymentMethod => 'businessNoPaymentMethod'.tr;
+  static String get businessMyInvitationCode => 'businessMyInvitationCode'.tr;
+  static String get businessInvitationHint => 'businessInvitationHint'.tr;
+  static String get businessFundRequestRecords =>
+      'businessFundRequestRecords'.tr;
+  static String get businessNoRecords => 'businessNoRecords'.tr;
+  static String get businessRequestAmount => 'businessRequestAmount'.tr;
+  static String get businessStatusPending => 'businessStatusPending'.tr;
+  static String get businessStatusProcessing => 'businessStatusProcessing'.tr;
+  static String get businessStatusApproved => 'businessStatusApproved'.tr;
+  static String get businessStatusRejected => 'businessStatusRejected'.tr;
+  static String get businessStatusNotSubmitted =>
+      'businessStatusNotSubmitted'.tr;
+  static String get businessPaymentBank => 'businessPaymentBank'.tr;
+  static String get businessPaymentWechat => 'businessPaymentWechat'.tr;
+  static String get businessPaymentAlipay => 'businessPaymentAlipay'.tr;
+  static String get businessPaymentMethod => 'businessPaymentMethod'.tr;
+  static String get businessContactSupportRecharge =>
+      'businessContactSupportRecharge'.tr;
+  static String get businessSubmitRechargeRequest =>
+      'businessSubmitRechargeRequest'.tr;
+  static String get businessRechargeMethod => 'businessRechargeMethod'.tr;
+  static String get businessRechargeAmount => 'businessRechargeAmount'.tr;
+  static String get businessUploadPaymentProof =>
+      'businessUploadPaymentProof'.tr;
+  static String get businessPaymentProofUploaded =>
+      'businessPaymentProofUploaded'.tr;
+  static String get businessEnterValidAmount => 'businessEnterValidAmount'.tr;
+  static String get businessRechargeSubmitted => 'businessRechargeSubmitted'.tr;
+  static String get businessSubmitRequest => 'businessSubmitRequest'.tr;
+  static String get businessBankName => 'businessBankName'.tr;
+  static String get businessAccountName => 'businessAccountName'.tr;
+  static String get businessAccountNumber => 'businessAccountNumber'.tr;
+  static String get businessCompleteKycFirst => 'businessCompleteKycFirst'.tr;
+  static String get businessAddPaymentMethodFirst =>
+      'businessAddPaymentMethodFirst'.tr;
+  static String get businessWithdrawRequest => 'businessWithdrawRequest'.tr;
+  static String get businessWithdrawAmount => 'businessWithdrawAmount'.tr;
+  static String get businessWithdrawSubmitted => 'businessWithdrawSubmitted'.tr;
+  static String get businessRealName => 'businessRealName'.tr;
+  static String get businessIdNumber => 'businessIdNumber'.tr;
+  static String get businessUploadIdFront => 'businessUploadIdFront'.tr;
+  static String get businessIdFrontUploaded => 'businessIdFrontUploaded'.tr;
+  static String get businessUploadIdBack => 'businessUploadIdBack'.tr;
+  static String get businessIdBackUploaded => 'businessIdBackUploaded'.tr;
+  static String get businessCompleteKycDetails =>
+      'businessCompleteKycDetails'.tr;
+  static String get businessKycSubmitted => 'businessKycSubmitted'.tr;
+  static String get businessSubmitReview => 'businessSubmitReview'.tr;
+  static String get businessAddPaymentMethod => 'businessAddPaymentMethod'.tr;
+  static String get businessPaymentType => 'businessPaymentType'.tr;
+  static String get businessPayeeName => 'businessPayeeName'.tr;
+  static String get businessBankNameLabel => 'businessBankNameLabel'.tr;
+  static String get businessBankCardNumber => 'businessBankCardNumber'.tr;
+  static String get businessUploadPaymentQr => 'businessUploadPaymentQr'.tr;
+  static String get businessPaymentQrUploaded => 'businessPaymentQrUploaded'.tr;
+  static String get businessCompletePaymentDetails =>
+      'businessCompletePaymentDetails'.tr;
+  static String get businessPaymentMethodSaved =>
+      'businessPaymentMethodSaved'.tr;
+
+  static String get securityLoadFailed => 'securityLoadFailed'.tr;
+  static String get securityRevokeDevice => 'securityRevokeDevice'.tr;
+  static String get securityRevokeDescription => 'securityRevokeDescription'.tr;
+  static String get securityConfirmationWord => 'securityConfirmationWord'.tr;
+  static String get securityDeviceRemoved => 'securityDeviceRemoved'.tr;
+  static String get securityRevokeFailed => 'securityRevokeFailed'.tr;
+  static String get securityTitle => 'securityTitle'.tr;
+  static String get securityCurrentDevices => 'securityCurrentDevices'.tr;
+  static String get securityNoDevices => 'securityNoDevices'.tr;
+  static String get securityLoginAudit => 'securityLoginAudit'.tr;
+  static String get securityNoLoginAudit => 'securityNoLoginAudit'.tr;
+  static String get securityUnknownPlatform => 'securityUnknownPlatform'.tr;
+  static String get securityCurrentDeviceMarker =>
+      'securityCurrentDeviceMarker'.tr;
+  static String get securitySessionDetails => 'securitySessionDetails'.tr;
+  static String get securityUnknownDevice => 'securityUnknownDevice'.tr;
+  static String get securityAuditSummary => 'securityAuditSummary'.tr;
+  static String get securityAuditDetails => 'securityAuditDetails'.tr;
+  static String get securityLoginAction => 'securityLoginAction'.tr;
+  static String get securityIpNotRecorded => 'securityIpNotRecorded'.tr;
 }

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_openim_sdk/flutter_openim_sdk.dart';
 import 'package:get/get.dart';
 import 'package:pull_to_refresh_new/pull_to_refresh.dart';
@@ -7,129 +6,131 @@ import '../../../core/controller/im_controller.dart';
 import '../../../core/im_callback.dart';
 import '../../conversation/conversation_logic.dart';
 
+class GroupListItem {
+  const GroupListItem({
+    required this.info,
+    required this.roleLevel,
+  });
+
+  final GroupInfo info;
+  final int roleLevel;
+}
+
 class GroupListLogic extends GetxController {
-  final imLoic = Get.find<IMController>();
-  final iCreateRefreshController = RefreshController(initialRefresh: true);
-  final iJoinRefreshController = RefreshController(initialRefresh: true);
-
-  final iCreateGlobalKey = GlobalKey();
-  final iJoinGlobalKey = GlobalKey();
-
+  final imLogic = Get.find<IMController>();
   final conversationLogic = Get.find<ConversationLogic>();
-  final index = 0.obs;
-  final iCreatedList = <GroupInfo>[].obs;
-  final iJoinedList = <GroupInfo>[].obs;
+  final refreshController = RefreshController();
+  final groupList = <GroupListItem>[].obs;
+  final isInitialLoading = true.obs;
 
-  int iCreatedOffset = 0;
-  int iJoinedOffset = 0;
-
-  int count = 1000;
+  static const _pageSize = 100;
+  int _offset = 0;
+  bool _isLoading = false;
 
   @override
   void onInit() {
-    imLoic.imSdkStatusPublishSubject.last.then((con) {
-      if (con.status == IMSdkStatus.syncEnded) {
-        iCreatedInitial();
-        iJoinedInitial();
-      }
+    imLogic.imSdkStatusPublishSubject.last.then((status) {
+      if (status.status == IMSdkStatus.syncEnded) refreshGroups();
     });
-
-    iCreatedInitial();
-    iJoinedInitial();
-
+    refreshGroups();
     super.onInit();
   }
 
-  void switchTab(i) {
-    index.value = i;
+  @override
+  void onClose() {
+    refreshController.dispose();
+    super.onClose();
   }
 
-  void iCreatedInitial() async {
-    iCreatedOffset = 0;
-    iCreatedList.clear();
-    final length = await initial(iCreate: true, offset: iCreatedOffset);
-
-    iCreateRefreshController.refreshCompleted();
-
-    if (length >= count) {
-      iCreatedOffset += length;
-    } else {
-      iCreateRefreshController.loadNoData();
+  Future<void> refreshGroups() async {
+    if (_isLoading) return;
+    _isLoading = true;
+    if (groupList.isEmpty) isInitialLoading.value = true;
+    try {
+      final page = await _loadPage(offset: 0);
+      _offset = page.length;
+      groupList.assignAll(await _withRole(page));
+      _sortGroups();
+      refreshController.refreshCompleted();
+      if (page.length < _pageSize) {
+        refreshController.loadNoData();
+      } else {
+        refreshController.resetNoData();
+      }
+    } catch (_) {
+      refreshController.refreshFailed();
+      rethrow;
+    } finally {
+      _isLoading = false;
+      isInitialLoading.value = false;
     }
   }
 
-  void iCreatedLoadMore() async {
-    final length = await loadMore(iCreate: true, offset: iCreatedOffset);
-
-    if (length < count) {
-      iCreateRefreshController.loadNoData();
-    } else {
-      iCreateRefreshController.loadComplete();
-      iCreatedOffset += length;
+  Future<void> loadMoreGroups() async {
+    if (_isLoading) return;
+    _isLoading = true;
+    try {
+      final page = await _loadPage(offset: _offset);
+      _offset += page.length;
+      groupList.addAll(await _withRole(page));
+      _sortGroups();
+      if (page.length < _pageSize) {
+        refreshController.loadNoData();
+      } else {
+        refreshController.loadComplete();
+      }
+    } catch (_) {
+      refreshController.loadFailed();
+      rethrow;
+    } finally {
+      _isLoading = false;
     }
   }
 
-  void iJoinedInitial() async {
-    iJoinedOffset = 0;
-    iJoinedList.clear();
-    final length = await initial(iCreate: false, offset: iJoinedOffset);
+  Future<List<GroupInfo>> _loadPage({required int offset}) =>
+      OpenIM.iMManager.groupManager.getJoinedGroupListPage(
+        offset: offset,
+        count: _pageSize,
+      );
 
-    iJoinRefreshController.refreshCompleted();
-
-    if (length >= count) {
-      iJoinedOffset += length;
-    } else {
-      iJoinRefreshController.loadNoData();
+  Future<List<GroupListItem>> _withRole(List<GroupInfo> groups) async {
+    final result = <GroupListItem>[];
+    const batchSize = 20;
+    for (var start = 0; start < groups.length; start += batchSize) {
+      final end =
+          start + batchSize < groups.length ? start + batchSize : groups.length;
+      result.addAll(await Future.wait(
+        groups.sublist(start, end).map(_resolveRole),
+      ));
     }
+    return result;
   }
 
-  void iJoinedLoadMore() async {
-    final length = await loadMore(iCreate: false, offset: iJoinedOffset);
-
-    if (length < count) {
-      iJoinRefreshController.loadNoData();
-    } else {
-      iJoinRefreshController.loadComplete();
-      iJoinedOffset += length;
+  Future<GroupListItem> _resolveRole(GroupInfo info) async {
+    if (info.ownerUserID == OpenIM.iMManager.userID) {
+      return GroupListItem(info: info, roleLevel: GroupRoleLevel.owner);
     }
+
+    final members = await OpenIM.iMManager.groupManager.getGroupMembersInfo(
+      groupID: info.groupID,
+      userIDList: [OpenIM.iMManager.userID],
+    );
+    return GroupListItem(
+      info: info,
+      roleLevel: members.isNotEmpty
+          ? members.first.roleLevel ?? GroupRoleLevel.member
+          : GroupRoleLevel.member,
+    );
   }
 
-  Future<int> initial({bool iCreate = true, int offset = 0}) async {
-    final list = await OpenIM.iMManager.groupManager.getJoinedGroupListPage(offset: offset, count: count);
-
-    int iCreatedCount = 0;
-    int iJoinedCount = 0;
-
-    if (iCreate) {
-      final result = list.where((e) => e.ownerUserID == OpenIM.iMManager.userID);
-      iCreatedList.addAll(result);
-      iCreatedCount = result.length;
-    } else {
-      final result = list.where((e) => e.ownerUserID != OpenIM.iMManager.userID);
-      iJoinedList.addAll(result);
-      iJoinedCount = result.length;
-    }
-
-    return iCreate ? iCreatedCount : iJoinedCount;
-  }
-
-  Future<int> loadMore({bool iCreate = true, int offset = 0}) async {
-    final list = await OpenIM.iMManager.groupManager.getJoinedGroupListPage(offset: offset, count: count);
-
-    int iCreatedCount = 0;
-    int iJoinedCount = 0;
-
-    if (iCreate) {
-      final result = list.where((e) => e.ownerUserID == OpenIM.iMManager.userID);
-      iCreatedList.addAll(result);
-      iCreatedCount = result.length;
-    } else {
-      final result = list.where((e) => e.ownerUserID != OpenIM.iMManager.userID);
-      iJoinedList.addAll(result);
-      iJoinedCount = result.length;
-    }
-
-    return iCreate ? iCreatedCount : iJoinedCount;
+  void _sortGroups() {
+    groupList.sort((left, right) {
+      final roleCompare = right.roleLevel.compareTo(left.roleLevel);
+      if (roleCompare != 0) return roleCompare;
+      return (left.info.groupName ?? '')
+          .toLowerCase()
+          .compareTo((right.info.groupName ?? '').toLowerCase());
+    });
   }
 
   void toGroupChat(GroupInfo info) {

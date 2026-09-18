@@ -38,6 +38,13 @@ class CreateGroupLogic extends GetxController {
 
   completeCreation() async {
     if (allList.length > 1) {
+      var privacyEnabled = true;
+      try {
+        final business = await Apis.businessBootstrap();
+        privacyEnabled = business['groupPrivacyEnable'] != false;
+      } catch (_) {
+        // Privacy-sensitive defaults fail closed when business config is unavailable.
+      }
       var info = await LoadingView.singleton.wrap(
         asyncFunction: () => OpenIM.iMManager.groupManager.createGroup(
           groupInfo: GroupInfo(
@@ -45,8 +52,13 @@ class CreateGroupLogic extends GetxController {
             groupName: groupName,
             faceURL: faceURL.value,
             groupType: GroupType.work,
+            lookMemberInfo: privacyEnabled ? 1 : 0,
+            applyMemberFriend: privacyEnabled ? 1 : 0,
           ),
-          memberUserIDs: allList.where((e) => e.userID != OpenIM.iMManager.userID).map((e) => e.userID!).toList(),
+          memberUserIDs: allList
+              .where((e) => e.userID != OpenIM.iMManager.userID)
+              .map((e) => e.userID!)
+              .toList(),
         ),
       );
       conversationLogic.toChat(

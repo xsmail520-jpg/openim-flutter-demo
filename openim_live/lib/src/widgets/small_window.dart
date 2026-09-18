@@ -30,14 +30,15 @@ class SmallWindowView extends StatelessWidget {
       onTap: onTapMaximize,
       onPanUpdate: onPanUpdate,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(6.r),
+        borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
         child: child?.call(callState) ??
             Container(
               width: 84.w,
               height: 101.h,
               decoration: BoxDecoration(
-                color: Styles.c_0C1C33_opacity80,
-                borderRadius: BorderRadius.circular(6.r),
+                color: Styles.ink.withValues(alpha: 0.92),
+                border: Border.all(color: Styles.primary),
+                borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
               ),
               child: Material(
                 color: Colors.transparent,

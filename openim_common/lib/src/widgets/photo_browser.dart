@@ -7,7 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
-import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart' as media_kit_video_controls;
+import 'package:media_kit_video/media_kit_video_controls/media_kit_video_controls.dart'
+    as media_kit_video_controls;
 import 'package:openim_common/openim_common.dart';
 
 import 'custom_mk_controls.dart';
@@ -20,7 +21,12 @@ class MediaSource {
   final bool isVideo;
   final String? tag;
 
-  MediaSource({required this.thumbnail, this.url, this.file, this.isVideo = false, this.tag});
+  MediaSource(
+      {required this.thumbnail,
+      this.url,
+      this.file,
+      this.isVideo = false,
+      this.tag});
 }
 
 class MediaBrowser extends StatefulWidget {
@@ -43,8 +49,10 @@ class MediaBrowser extends StatefulWidget {
   State<MediaBrowser> createState() => _MediaBrowserState();
 }
 
-class _MediaBrowserState extends State<MediaBrowser> with TickerProviderStateMixin {
-  GlobalKey<ExtendedImageSlidePageState> slidePagekey = GlobalKey<ExtendedImageSlidePageState>();
+class _MediaBrowserState extends State<MediaBrowser>
+    with TickerProviderStateMixin {
+  GlobalKey<ExtendedImageSlidePageState> slidePagekey =
+      GlobalKey<ExtendedImageSlidePageState>();
 
   final List<int> _cachedIndexes = <int>[];
   int currentIndex = 0;
@@ -57,7 +65,8 @@ class _MediaBrowserState extends State<MediaBrowser> with TickerProviderStateMix
   @override
   void initState() {
     currentIndex = widget.initialIndex;
-    _doubleClickAnimationController = AnimationController(duration: const Duration(milliseconds: 150), vsync: this);
+    _doubleClickAnimationController = AnimationController(
+        duration: const Duration(milliseconds: 150), vsync: this);
     super.initState();
   }
 
@@ -93,7 +102,7 @@ class _MediaBrowserState extends State<MediaBrowser> with TickerProviderStateMix
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     return Material(
-      color: Colors.transparent,
+      color: Styles.ink,
       shadowColor: Colors.transparent,
       child: ExtendedImageSlidePage(
         key: slidePagekey,
@@ -103,7 +112,7 @@ class _MediaBrowserState extends State<MediaBrowser> with TickerProviderStateMix
         slidePageBackgroundHandler: (offset, pageSize) {
           double rate = 1 - (offset.dy.abs() / (size.height / 2));
           rate = rate > 0 ? rate : 0;
-          return Colors.black.withOpacity(rate);
+          return Styles.ink.withValues(alpha: rate);
         },
         child: GestureDetector(
           onTap: () {
@@ -111,128 +120,187 @@ class _MediaBrowserState extends State<MediaBrowser> with TickerProviderStateMix
             Navigator.pop(context);
           },
           onLongPress: () => widget.onLongPress?.call(currentIndex),
-          child: ExtendedImageGesturePageView.builder(
-            controller: ExtendedPageController(
-              initialPage: currentIndex,
-              pageSpacing: 8,
-              shouldIgnorePointerWhenScrolling: true,
-            ),
-            itemCount: widget.sources.length,
-            onPageChanged: (int page) {
-              _preloadImage(page - 1);
-              _preloadImage(page + 1);
-            },
-            itemBuilder: (BuildContext context, int index) {
-              final s = widget.sources[index];
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: ExtendedImageGesturePageView.builder(
+                  controller: ExtendedPageController(
+                    initialPage: currentIndex,
+                    pageSpacing: 8,
+                    shouldIgnorePointerWhenScrolling: true,
+                  ),
+                  itemCount: widget.sources.length,
+                  onPageChanged: (int page) {
+                    setState(() => currentIndex = page);
+                    _preloadImage(page - 1);
+                    _preloadImage(page + 1);
+                  },
+                  itemBuilder: (BuildContext context, int index) {
+                    final s = widget.sources[index];
 
-              return s.isVideo
-                  ? ExtendedImageSlidePageHandler(
-                      child: VideoPlayerView(
-                        url: s.url,
-                        coverUrl: s.thumbnail,
-                        file: s.file,
-                        heroTag: s.tag,
-                        autoPlay: widget.onAutoPlay?.call(index) ?? false,
-                        muted: widget.muted,
-                        onDownload: (url, file) => widget.onSave?.call(currentIndex),
-                      ),
-                      heroBuilderForSlidingPage: (Widget result) {
-                        return Hero(
-                          tag: s.tag ?? s.thumbnail,
-                          child: result,
-                          flightShuttleBuilder: (BuildContext flightContext,
-                              Animation<double> animation,
-                              HeroFlightDirection flightDirection,
-                              BuildContext fromHeroContext,
-                              BuildContext toHeroContext) {
-                            final Hero hero = (flightDirection == HeroFlightDirection.pop
-                                ? fromHeroContext.widget
-                                : toHeroContext.widget) as Hero;
-
-                            return hero.child;
-                          },
-                        );
-                      },
-                    )
-                  : HeroWidget(
-                      tag: s.tag ?? s.thumbnail,
-                      slideType: SlideType.onlyImage,
-                      slidePagekey: slidePagekey,
-                      child: s.file != null && s.file!.existsSync()
-                          ? ExtendedImage.file(
-                              s.file!,
-                              enableSlideOutPage: true,
-                              fit: BoxFit.contain,
-                              mode: ExtendedImageMode.gesture,
-                            )
-                          : ExtendedImage.network(
-                              s.url ?? s.thumbnail,
-                              enableSlideOutPage: true,
-                              fit: BoxFit.contain,
-                              mode: ExtendedImageMode.gesture,
-                              initGestureConfigHandler: (ExtendedImageState state) {
-                                return GestureConfig(
-                                  minScale: 0.9,
-                                  animationMinScale: 0.7,
-                                  maxScale: 3.0,
-                                  animationMaxScale: 3.5,
-                                  speed: 1.0,
-                                  inPageView: true,
-                                  initialAlignment: InitialAlignment.center,
-                                );
-                              },
-                              onDoubleTap: (state) {
-                                final Offset? pointerDownPosition = state.pointerDownPosition;
-                                final double? begin = state.gestureDetails!.totalScale;
-                                double end;
-
-                                _doubleClickAnimation?.removeListener(_doubleClickAnimationListener);
-
-                                _doubleClickAnimationController.stop();
-
-                                _doubleClickAnimationController.reset();
-
-                                if (begin == doubleTapScales[0]) {
-                                  end = doubleTapScales[1];
-                                } else {
-                                  end = doubleTapScales[0];
-                                }
-
-                                _doubleClickAnimationListener = () {
-                                  state.handleDoubleTap(
-                                      scale: _doubleClickAnimation!.value, doubleTapPosition: pointerDownPosition);
-                                };
-                                _doubleClickAnimation =
-                                    _doubleClickAnimationController.drive(Tween<double>(begin: begin, end: end));
-
-                                _doubleClickAnimation!.addListener(_doubleClickAnimationListener);
-
-                                _doubleClickAnimationController.forward();
-                              },
-                              loadStateChanged: (state) {
-                                if (state.extendedImageLoadState == LoadState.loading) {
-                                  return Stack(
-                                    alignment: AlignmentDirectional.center,
-                                    children: [
-                                      ExtendedImage.network(
-                                        s.thumbnail,
-                                        enableLoadState: false,
-                                      ),
-                                      const CupertinoActivityIndicator(
-                                        radius: 15,
-                                      ),
-                                    ],
-                                  );
-                                } else if (state.extendedImageLoadState == LoadState.failed) {
-                                  state.imageProvider.evict();
-
-                                  return ImageRes.pictureError.toImage;
-                                }
-                                return null;
-                              },
+                    return s.isVideo
+                        ? ExtendedImageSlidePageHandler(
+                            child: VideoPlayerView(
+                              url: s.url,
+                              coverUrl: s.thumbnail,
+                              file: s.file,
+                              heroTag: s.tag,
+                              autoPlay: widget.onAutoPlay?.call(index) ?? false,
+                              muted: widget.muted,
+                              onDownload: (url, file) =>
+                                  widget.onSave?.call(currentIndex),
                             ),
-                    );
-            },
+                            heroBuilderForSlidingPage: (Widget result) {
+                              return Hero(
+                                tag: s.tag ?? s.thumbnail,
+                                child: result,
+                                flightShuttleBuilder:
+                                    (BuildContext flightContext,
+                                        Animation<double> animation,
+                                        HeroFlightDirection flightDirection,
+                                        BuildContext fromHeroContext,
+                                        BuildContext toHeroContext) {
+                                  final Hero hero = (flightDirection ==
+                                          HeroFlightDirection.pop
+                                      ? fromHeroContext.widget
+                                      : toHeroContext.widget) as Hero;
+
+                                  return hero.child;
+                                },
+                              );
+                            },
+                          )
+                        : HeroWidget(
+                            tag: s.tag ?? s.thumbnail,
+                            slideType: SlideType.onlyImage,
+                            slidePagekey: slidePagekey,
+                            child: s.file != null && s.file!.existsSync()
+                                ? ExtendedImage.file(
+                                    s.file!,
+                                    enableSlideOutPage: true,
+                                    fit: BoxFit.contain,
+                                    mode: ExtendedImageMode.gesture,
+                                  )
+                                : ExtendedImage.network(
+                                    s.url ?? s.thumbnail,
+                                    enableSlideOutPage: true,
+                                    fit: BoxFit.contain,
+                                    mode: ExtendedImageMode.gesture,
+                                    initGestureConfigHandler:
+                                        (ExtendedImageState state) {
+                                      return GestureConfig(
+                                        minScale: 0.9,
+                                        animationMinScale: 0.7,
+                                        maxScale: 3.0,
+                                        animationMaxScale: 3.5,
+                                        speed: 1.0,
+                                        inPageView: true,
+                                        initialAlignment:
+                                            InitialAlignment.center,
+                                      );
+                                    },
+                                    onDoubleTap: (state) {
+                                      final Offset? pointerDownPosition =
+                                          state.pointerDownPosition;
+                                      final double? begin =
+                                          state.gestureDetails!.totalScale;
+                                      double end;
+
+                                      _doubleClickAnimation?.removeListener(
+                                          _doubleClickAnimationListener);
+
+                                      _doubleClickAnimationController.stop();
+
+                                      _doubleClickAnimationController.reset();
+
+                                      if (begin == doubleTapScales[0]) {
+                                        end = doubleTapScales[1];
+                                      } else {
+                                        end = doubleTapScales[0];
+                                      }
+
+                                      _doubleClickAnimationListener = () {
+                                        state.handleDoubleTap(
+                                            scale: _doubleClickAnimation!.value,
+                                            doubleTapPosition:
+                                                pointerDownPosition);
+                                      };
+                                      _doubleClickAnimation =
+                                          _doubleClickAnimationController.drive(
+                                              Tween<double>(
+                                                  begin: begin, end: end));
+
+                                      _doubleClickAnimation!.addListener(
+                                          _doubleClickAnimationListener);
+
+                                      _doubleClickAnimationController.forward();
+                                    },
+                                    loadStateChanged: (state) {
+                                      if (state.extendedImageLoadState ==
+                                          LoadState.loading) {
+                                        return Stack(
+                                          alignment:
+                                              AlignmentDirectional.center,
+                                          children: [
+                                            ExtendedImage.network(
+                                              s.thumbnail,
+                                              enableLoadState: false,
+                                            ),
+                                            const CupertinoActivityIndicator(
+                                              radius: 15,
+                                            ),
+                                          ],
+                                        );
+                                      } else if (state.extendedImageLoadState ==
+                                          LoadState.failed) {
+                                        state.imageProvider.evict();
+
+                                        return ImageRes.pictureError.toImage;
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                          );
+                  },
+                ),
+              ),
+              SafeArea(
+                child: Container(
+                  height: 52,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  decoration: BoxDecoration(
+                    color: Styles.ink.withValues(alpha: 0.9),
+                    border: const Border(
+                      bottom: BorderSide(color: Styles.primary, width: 2),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 44,
+                        height: 44,
+                        child: IconButton(
+                          tooltip: MaterialLocalizations.of(context)
+                              .closeButtonLabel,
+                          onPressed: () {
+                            slidePagekey.currentState!.popPage();
+                            Navigator.pop(context);
+                          },
+                          icon: const Icon(Icons.close,
+                              color: Styles.surface, size: 22),
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${currentIndex + 1}/${widget.sources.length}',
+                        style: Styles.ts_FFFFFF_14sp_medium,
+                      ),
+                      const SizedBox(width: 12),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -292,7 +360,8 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
         player.open(Media(widget.url!));
       }
     }();
-    media_kit_video_controls.kDefaultMaterialVideoControlsThemeDataFullscreen.copyWith();
+    media_kit_video_controls.kDefaultMaterialVideoControlsThemeDataFullscreen
+        .copyWith();
   }
 
   @override
@@ -306,11 +375,14 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
     return Stack(
       children: [
         MaterialVideoControlsTheme(
-          normal: media_kit_video_controls.kDefaultMaterialVideoControlsThemeData.copyWith(
+          normal: media_kit_video_controls
+              .kDefaultMaterialVideoControlsThemeData
+              .copyWith(
             bottomButtonBarMargin: const EdgeInsets.only(bottom: 70),
-            seekBarMargin: const EdgeInsets.only(bottom: 60, left: 24, right: 24),
+            seekBarMargin:
+                const EdgeInsets.only(bottom: 60, left: 24, right: 24),
             seekBarThumbColor: Colors.white,
-            seekBarPositionColor: Colors.white,
+            seekBarPositionColor: Styles.primary,
             bottomButtonBar: [
               const MaterialPlayOrPauseButton(),
               const MaterialPositionIndicator(),
@@ -322,7 +394,8 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
                   }),
             ],
           ),
-          fullscreen: media_kit_video_controls.kDefaultMaterialVideoControlsThemeDataFullscreen,
+          fullscreen: media_kit_video_controls
+              .kDefaultMaterialVideoControlsThemeDataFullscreen,
           child: Video(
             controller: controller,
             fit: BoxFit.contain,
@@ -349,7 +422,8 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
 
                 widget.onDownload?.call(widget.url, file?.file);
               },
-              child: Text(StrRes.download),
+              child: Text(StrRes.download,
+                  style: const TextStyle(color: Styles.primary)),
             ),
           ],
           cancelButton: CupertinoActionSheetAction(
@@ -357,7 +431,8 @@ class _VideoPlayerViewState extends State<VideoPlayerView> {
               Navigator.pop(context);
             },
             isDestructiveAction: true,
-            child: Text(StrRes.cancel),
+            child: Text(StrRes.cancel,
+                style: const TextStyle(color: Styles.danger)),
           ),
         );
       },

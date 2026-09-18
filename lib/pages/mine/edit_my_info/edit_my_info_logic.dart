@@ -31,7 +31,8 @@ class EditMyInfoLogic extends GetxController {
     super.onInit();
   }
 
-  _initAttr() {
+  /// 根据编辑项初始化标题、当前值和输入键盘。
+  void _initAttr() {
     switch (editAttr) {
       case EditAttr.nickname:
         title = StrRes.name;
@@ -55,9 +56,14 @@ class EditMyInfoLogic extends GetxController {
     }
   }
 
-  void save() async {
+  /// 校验并保存姓名、手机号或邮箱，成功后同步本地用户信息。
+  Future<void> save() async {
     final value = inputCtrl.text.trim();
     if (editAttr == EditAttr.nickname) {
+      if (value.isEmpty) {
+        IMViews.showToast(StrRes.plsEnterYourNickname);
+        return;
+      }
       await LoadingView.singleton.wrap(
         asyncFunction: () => Apis.updateUserInfo(
           userID: OpenIM.iMManager.userID,
@@ -82,6 +88,10 @@ class EditMyInfoLogic extends GetxController {
         IMViews.showToast(StrRes.plsEnterEmail);
         return;
       }
+      if (value.isNotEmpty && !value.isEmail) {
+        IMViews.showToast(StrRes.plsEnterEmail);
+        return;
+      }
       await LoadingView.singleton.wrap(
         asyncFunction: () => Apis.updateUserInfo(
           userID: OpenIM.iMManager.userID,
@@ -93,5 +103,12 @@ class EditMyInfoLogic extends GetxController {
       });
     }
     Get.back();
+  }
+
+  /// 释放输入控制器，避免反复进入编辑页积累监听资源。
+  @override
+  void onClose() {
+    inputCtrl.dispose();
+    super.onClose();
   }
 }

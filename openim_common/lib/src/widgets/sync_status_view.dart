@@ -15,10 +15,16 @@ class SyncStatusView extends StatelessWidget {
   Widget build(BuildContext context) {
     Logger.print('Sync Status View: $isFailed, $statusStr');
     return Container(
-      padding: EdgeInsets.symmetric(vertical: 3.h, horizontal: 12.w),
+      constraints: BoxConstraints(minHeight: 28.h),
+      padding: EdgeInsets.symmetric(vertical: 4.h, horizontal: 12.w),
       decoration: BoxDecoration(
-        color: isFailed ? Styles.c_FFE1DD : Styles.c_F2F8FF,
-        borderRadius: BorderRadius.circular(6.r),
+        color: isFailed ? Styles.dangerContainer : Styles.background,
+        border: Border.all(
+          color:
+              isFailed ? Styles.danger.withValues(alpha: .2) : Styles.divider,
+          width: Styles.dividerWidth,
+        ),
+        borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -36,7 +42,9 @@ class SyncStatusView extends StatelessWidget {
                   ),
                 ),
           4.horizontalSpace,
-          statusStr.toText..style = (isFailed ? Styles.ts_FF381F_12sp : Styles.ts_0089FF_12sp),
+          statusStr.toText
+            ..style =
+                (isFailed ? Styles.ts_FF381F_12sp : Styles.ts_0089FF_12sp),
         ],
       ),
     );

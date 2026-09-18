@@ -16,7 +16,7 @@ publish_to: "none" # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 3.8.3+235
+version: 3.8.5+240
 
 environment:
   sdk: ">=3.6.0 <4.0.0"
@@ -32,6 +32,9 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+
+  # Flutter 3.32 的 Release 注册表仍会引用该插件；作为普通依赖可确保 Android 实现一同编译。
+  flutter_native_splash: ^2.2.19
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -60,6 +63,7 @@ dependencies:
   open_filex: ^4.3.2
   lottie: ^3.3.1
   qr_flutter: ^4.0.0
+  qr_code_scanner_plus: ^2.1.2
   image_cropper: ^9.1.0
   package_info_plus: ^8.3.1
   search_keyword_text: ^0.0.2
@@ -111,7 +115,6 @@ dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_launcher_icons: ^0.13.1
-  flutter_native_splash: ^2.2.19
   hive_generator: ^2.0.1
   build_runner: ^2.4.15
   flutter_lints: ^6.0.0

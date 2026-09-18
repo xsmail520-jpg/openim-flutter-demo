@@ -31,7 +31,7 @@ class WrapAzListView<T extends ISuspensionBean> extends StatelessWidget {
         }
         return _buildTagView(model.getSuspensionTag());
       },
-      susItemHeight: 23.h,
+      susItemHeight: 28.h,
       indexBarData: SuspensionUtil.getTagIndexList(data),
       indexBarOptions: IndexBarOptions(
         needRebuild: true,
@@ -52,11 +52,19 @@ class WrapAzListView<T extends ISuspensionBean> extends StatelessWidget {
   }
 
   Widget _buildTagView(String tag) => Container(
-        height: 23.h,
+        height: 28.h,
         padding: EdgeInsets.symmetric(horizontal: 16.w),
         alignment: Alignment.centerLeft,
         width: 1.sw,
-        color: Styles.c_E8EAEF,
+        decoration: const BoxDecoration(
+          color: Styles.background,
+          border: BorderDirectional(
+            bottom: BorderSide(
+              color: Styles.divider,
+              width: Styles.dividerWidth,
+            ),
+          ),
+        ),
         child: tag.toText..style = Styles.ts_8E9AB0_14sp,
       );
 }

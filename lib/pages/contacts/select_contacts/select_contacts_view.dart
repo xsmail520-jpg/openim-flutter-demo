@@ -15,50 +15,40 @@ class SelectContactsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: TitleBar.back(),
-      backgroundColor: Styles.c_F8F9FA,
+      appBar: TitleBar.back(showUnderline: true),
+      backgroundColor: Styles.background,
       body: Column(
         children: [
-          10.verticalSpace,
-          Flexible(
-            child: Obx(() => CustomScrollView(
-                  slivers: [
-                    SliverFixedExtentList(
-                      delegate: SliverChildListDelegate(
-                        [
-                          _buildCategoryItemView(
-                            label: StrRes.myFriend,
-                            onTap: logic.selectFromMyFriend,
-                          ),
-                          if (!logic.hiddenGroup)
-                            _buildCategoryItemView(
-                              label: StrRes.myGroup,
-                              onTap: logic.selectFromMyGroup,
-                            ),
-                        ],
+          Expanded(
+            child: Obx(
+              () => CustomScrollView(
+                slivers: [
+                  SliverToBoxAdapter(child: 8.verticalSpace),
+                  SliverToBoxAdapter(child: _buildCategorySection()),
+                  if (logic.conversationList.isNotEmpty) ...[
+                    SliverToBoxAdapter(
+                      child: Container(
+                        height: 38.h,
+                        alignment: Alignment.centerLeft,
+                        padding: EdgeInsets.symmetric(horizontal: 16.w),
+                        child: StrRes.recentConversations.toText
+                          ..style = Styles.ts_8E9AB0_12sp,
                       ),
-                      itemExtent: 56.h,
                     ),
-                    if (logic.conversationList.isNotEmpty)
-                      SliverToBoxAdapter(
-                        child: Container(
-                          height: 29.h,
-                          alignment: Alignment.centerLeft,
-                          margin: EdgeInsets.symmetric(horizontal: 16.w),
-                          child: StrRes.recentConversations.toText..style = Styles.ts_8E9AB0_12sp,
-                        ),
-                      ),
-                    SliverFixedExtentList(
+                    SliverList(
                       delegate: SliverChildBuilderDelegate(
                         childCount: logic.conversationList.length,
                         (_, index) => _buildRecentConversationsItemView(
                           logic.conversationList.elementAt(index),
+                          isFirst: index == 0,
                         ),
                       ),
-                      itemExtent: 64.h,
                     ),
                   ],
-                )),
+                  SliverToBoxAdapter(child: 12.verticalSpace),
+                ],
+              ),
+            ),
           ),
           logic.checkedConfirmView,
         ],
@@ -66,54 +56,121 @@ class SelectContactsPage extends StatelessWidget {
     );
   }
 
+  /// 选择来源集中在同一连续分区，图标帮助区分快速入口但不新增业务内容。
+  Widget _buildCategorySection() {
+    final showGroup = !logic.hiddenGroup;
+    return Container(
+      decoration: const BoxDecoration(
+        color: Styles.surface,
+        border: Border.symmetric(
+          horizontal: BorderSide(
+            color: Styles.divider,
+            width: Styles.dividerWidth,
+          ),
+        ),
+      ),
+      child: Column(
+        children: [
+          _buildCategoryItemView(
+            assetsName: ImageRes.myFriend,
+            label: StrRes.myFriend,
+            showDivider: showGroup,
+            onTap: logic.selectFromMyFriend,
+          ),
+          if (showGroup)
+            _buildCategoryItemView(
+              assetsName: ImageRes.myGroup,
+              label: StrRes.myGroup,
+              onTap: logic.selectFromMyGroup,
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// 来源行提供完整 64dp 点击区域，并通过缩进分隔维持名录秩序。
   Widget _buildCategoryItemView({
+    required String assetsName,
     required String label,
+    bool showDivider = false,
     Function()? onTap,
   }) =>
-      Ink(
-        height: 56.h,
-        color: Styles.c_FFFFFF,
+      Material(
+        color: Styles.surface,
         child: InkWell(
           onTap: onTap,
           child: Container(
-            padding: EdgeInsets.symmetric(horizontal: 16.w),
+            constraints: BoxConstraints(minHeight: 64.h),
+            margin: EdgeInsets.only(left: 16.w),
+            padding: EdgeInsets.only(right: 16.w),
+            decoration: BoxDecoration(
+              border: showDivider
+                  ? const BorderDirectional(
+                      bottom: BorderSide(
+                        color: Styles.divider,
+                        width: Styles.dividerWidth,
+                      ),
+                    )
+                  : null,
+            ),
             child: Row(
               children: [
-                label.toText..style = Styles.ts_0C1C33_17sp,
+                assetsName.toImage
+                  ..width = 40.w
+                  ..height = 40.h,
+                12.horizontalSpace,
+                label.toText..style = Styles.ts_0C1C33_17sp_medium,
                 const Spacer(),
                 ImageRes.rightArrow.toImage
-                  ..width = 24.w
-                  ..height = 24.h,
+                  ..width = 20.w
+                  ..height = 20.h,
               ],
             ),
           ),
         ),
       );
 
-  Widget _buildRecentConversationsItemView(ConversationInfo info) {
-    Widget buildChild() => Ink(
-          height: 56.h,
-          color: Styles.c_FFFFFF,
+  /// 最近会话复用原有数据，只调整为边界清晰的连续选择名录。
+  Widget _buildRecentConversationsItemView(
+    ConversationInfo info, {
+    required bool isFirst,
+  }) {
+    Widget buildChild() => Material(
+          color: Styles.surface,
           child: InkWell(
             onTap: logic.onTap(info),
             child: Container(
+              constraints: BoxConstraints(minHeight: 68.h),
               padding: EdgeInsets.symmetric(horizontal: 16.w),
+              decoration: BoxDecoration(
+                border: BorderDirectional(
+                  top: isFirst
+                      ? const BorderSide(
+                          color: Styles.divider,
+                          width: Styles.dividerWidth,
+                        )
+                      : BorderSide.none,
+                  bottom: const BorderSide(
+                    color: Styles.divider,
+                    width: Styles.dividerWidth,
+                  ),
+                ),
+              ),
               child: Row(
                 children: [
-                  if (logic.isMultiModel)
-                    Padding(
-                      padding: EdgeInsets.only(right: 10.w),
-                      child: ChatRadio(
-                        checked: logic.isChecked(info),
-                      ),
-                    ),
+                  if (logic.isMultiModel) ...[
+                    ChatRadio(checked: logic.isChecked(info)),
+                    12.horizontalSpace,
+                  ],
                   AvatarView(
                     url: info.faceURL,
                     text: info.showName,
                     isGroup: !info.isSingleChat,
+                    width: 42.w,
+                    height: 42.h,
                   ),
-                  10.horizontalSpace,
-                  Flexible(
+                  12.horizontalSpace,
+                  Expanded(
                     child: (info.showName ?? '').toText
                       ..style = Styles.ts_0C1C33_17sp
                       ..maxLines = 1
@@ -134,62 +191,64 @@ class CheckedConfirmView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: 66.h,
-      decoration: BoxDecoration(
-        color: Styles.c_FFFFFF,
-        boxShadow: [
-          BoxShadow(
-            offset: Offset(0, -1.h),
-            blurRadius: 4.r,
-            spreadRadius: 1.r,
-            color: Styles.c_000000_opacity4,
+    return SafeArea(
+      top: false,
+      child: Container(
+        constraints: BoxConstraints(minHeight: 72.h),
+        decoration: const BoxDecoration(
+          color: Styles.surface,
+          border: BorderDirectional(
+            top: BorderSide(
+              color: Styles.divider,
+              width: Styles.dividerWidth,
+            ),
           ),
-        ],
-      ),
-      padding: EdgeInsets.symmetric(horizontal: 16.w),
-      child: Obx(() => Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.translucent,
-                  onTap: logic.viewSelectedContactsList,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Row(
-                        children: [
-                          sprintf(StrRes.selectedPeopleCount, [logic.checkedList.length]).toText
-                            ..style = Styles.ts_0089FF_14sp,
-                          ImageRes.expandUpArrow.toImage
-                            ..width = 24.w
-                            ..height = 24.h,
-                        ],
-                      ),
-                      if (logic.checkedList.isNotEmpty) 4.verticalSpace,
-                      logic.checkedStrTips.toText
-                        ..style = Styles.ts_8E9AB0_14sp
-                        ..maxLines = 1
-                        ..overflow = TextOverflow.ellipsis,
-                    ],
+        ),
+        padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
+        child: Obx(() => Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: logic.viewSelectedContactsList,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          children: [
+                            sprintf(StrRes.selectedPeopleCount,
+                                [logic.checkedList.length]).toText
+                              ..style = Styles.ts_0089FF_14sp_medium,
+                            ImageRes.expandUpArrow.toImage
+                              ..width = 20.w
+                              ..height = 20.h,
+                          ],
+                        ),
+                        if (logic.checkedList.isNotEmpty) 4.verticalSpace,
+                        logic.checkedStrTips.toText
+                          ..style = Styles.ts_8E9AB0_14sp
+                          ..maxLines = 1
+                          ..overflow = TextOverflow.ellipsis,
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              Button(
-                height: 40.h,
-                enabled: logic.enabledConfirmButton,
-                padding: EdgeInsets.symmetric(horizontal: 14.w),
-                text: sprintf(StrRes.confirmSelectedPeople, [
-                  logic.checkedList.length,
-                  '999',
-                ]),
-                textStyle: Styles.ts_FFFFFF_14sp,
-                onTap: logic.confirmSelectedList,
-              ),
-            ],
-          )),
+                Button(
+                  height: 44.h,
+                  enabled: logic.enabledConfirmButton,
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  text: sprintf(StrRes.confirmSelectedPeople, [
+                    logic.checkedList.length,
+                    '999',
+                  ]),
+                  textStyle: Styles.ts_FFFFFF_14sp,
+                  onTap: logic.confirmSelectedList,
+                ),
+              ],
+            )),
+      ),
     );
   }
 }
@@ -200,50 +259,59 @@ class SelectedContactsListView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(maxHeight: 548.h),
-      decoration: BoxDecoration(
-        color: Styles.c_FFFFFF,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(6.r),
-          topRight: Radius.circular(6.r),
+    return SafeArea(
+      top: false,
+      child: Container(
+        constraints: BoxConstraints(maxHeight: 548.h),
+        decoration: BoxDecoration(
+          color: Styles.surface,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(Styles.radiusMedium.r),
+            topRight: Radius.circular(Styles.radiusMedium.r),
+          ),
         ),
-      ),
-      child: Obx(() => Column(
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 16.w),
-                decoration: BoxDecoration(
-                  border: BorderDirectional(
-                    bottom: BorderSide(color: Styles.c_E8EAEF, width: 1),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    sprintf(StrRes.selectedPeopleCount, [logic.checkedList.length]).toText
-                      ..style = Styles.ts_0C1C33_17sp_medium,
-                    const Spacer(),
-                    GestureDetector(
-                      behavior: HitTestBehavior.translucent,
-                      onTap: () => Get.back(),
-                      child: Container(
-                        height: 52.h,
-                        alignment: Alignment.center,
-                        child: StrRes.confirm.toText..style = Styles.ts_0089FF_17sp,
+        child: Obx(() => Column(
+              children: [
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  decoration: const BoxDecoration(
+                    border: BorderDirectional(
+                      bottom: BorderSide(
+                        color: Styles.divider,
+                        width: Styles.dividerWidth,
                       ),
                     ),
-                  ],
+                  ),
+                  child: Row(
+                    children: [
+                      sprintf(StrRes.selectedPeopleCount,
+                          [logic.checkedList.length]).toText
+                        ..style = Styles.ts_0C1C33_17sp_medium,
+                      const Spacer(),
+                      GestureDetector(
+                        behavior: HitTestBehavior.translucent,
+                        onTap: () => Get.back(),
+                        child: Container(
+                          height: 52.h,
+                          width: 44.w,
+                          alignment: Alignment.center,
+                          child: StrRes.confirm.toText
+                            ..style = Styles.ts_0089FF_17sp_semibold,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: logic.checkedList.length,
-                  shrinkWrap: true,
-                  itemBuilder: (_, index) => _buildItemView(index),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: logic.checkedList.length,
+                    shrinkWrap: true,
+                    itemBuilder: (_, index) => _buildItemView(index),
+                  ),
                 ),
-              ),
-            ],
-          )),
+              ],
+            )),
+      ),
     );
   }
 
@@ -265,32 +333,56 @@ class SelectedContactsListView extends StatelessWidget {
       faceURL = info.faceURL;
     }
     return Container(
-      height: 64.h,
+      constraints: BoxConstraints(minHeight: 68.h),
       padding: EdgeInsets.symmetric(horizontal: 16.w),
-      color: Styles.c_FFFFFF,
+      decoration: const BoxDecoration(
+        color: Styles.surface,
+        border: BorderDirectional(
+          bottom: BorderSide(
+            color: Styles.divider,
+            width: Styles.dividerWidth,
+          ),
+        ),
+      ),
       child: Row(
         children: [
-          AvatarView(url: faceURL, text: name, isGroup: isGroup),
-          10.horizontalSpace,
+          AvatarView(
+            url: faceURL,
+            text: name,
+            isGroup: isGroup,
+            width: 42.w,
+            height: 42.h,
+          ),
+          12.horizontalSpace,
           Expanded(
             child: (name ?? '').toText
               ..style = Styles.ts_0C1C33_17sp
               ..maxLines = 1
               ..overflow = TextOverflow.ellipsis,
           ),
-          GestureDetector(
-            behavior: HitTestBehavior.translucent,
-            onTap: () => logic.removeItem(info),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 13.w, vertical: 4.h),
+          Material(
+            color: Colors.transparent,
+            child: Ink(
+              height: 44.h,
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(2.r),
+                color: Styles.primaryContainer,
+                borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
                 border: Border.all(
-                  color: Styles.c_E8EAEF,
-                  width: 1,
+                  color: Styles.primary,
+                  width: Styles.dividerWidth,
                 ),
               ),
-              child: StrRes.remove.toText..style = Styles.ts_0089FF_17sp,
+              child: InkWell(
+                onTap: () => logic.removeItem(info),
+                borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 14.w),
+                  child: Center(
+                    child: StrRes.remove.toText
+                      ..style = Styles.ts_0089FF_14sp_medium,
+                  ),
+                ),
+              ),
             ),
           ),
         ],

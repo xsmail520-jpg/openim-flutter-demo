@@ -34,7 +34,11 @@ class CustomTabBar extends StatelessWidget {
         color: Styles.c_FFFFFF,
         border: showUnderline
             ? BorderDirectional(
-                bottom: BorderSide(color: Styles.c_E8EAEF, width: 1))
+                bottom: const BorderSide(
+                  color: Styles.divider,
+                  width: Styles.dividerWidth,
+                ),
+              )
             : null,
       ),
       child: Row(
@@ -44,36 +48,39 @@ class CustomTabBar extends StatelessWidget {
   }
 
   Widget _buildItemView(int i) => Expanded(
-        child: GestureDetector(
-          onTap: () {
-            if (null != onTabChanged) onTabChanged!(i);
-          },
-          behavior: HitTestBehavior.translucent,
-          child: SizedBox(
-            height: height ?? 42.h,
-            child: Stack(
-              children: [
-                Align(
-                  alignment: Alignment.center,
-                  child: labels.elementAt(i).toText
-                    ..style = Styles.ts_0C1C33_17sp,
-                ),
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Visibility(
-                    visible: i == index,
-                    child: Container(
-                      margin: EdgeInsets.only(bottom: 4.h),
-                      decoration: BoxDecoration(
-                        color: Styles.c_0C1C33,
-                        borderRadius: BorderRadius.circular(1.5.r),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              if (null != onTabChanged) onTabChanged!(i);
+            },
+            child: SizedBox(
+              height: height ?? Styles.controlHeight.h,
+              child: Stack(
+                children: [
+                  Align(
+                    alignment: Alignment.center,
+                    child: labels.elementAt(i).toText
+                      ..style = (i == index
+                          ? selectedStyle ?? Styles.ts_0089FF_17sp_semibold
+                          : unselectedStyle ?? Styles.ts_8E9AB0_17sp),
+                  ),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Visibility(
+                      visible: i == index,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: indicatorColor ?? Styles.primary,
+                          borderRadius: BorderRadius.circular(1.r),
+                        ),
+                        height: indicatorHeight ?? 2.h,
+                        width: indicatorWidth ?? 24.w,
                       ),
-                      height: indicatorHeight ?? 3.h,
-                      width: indicatorWidth ?? 20.w,
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import 'package:openim_common/openim_common.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../core/controller/app_controller.dart';
 import '../../core/controller/im_controller.dart';
 import '../../routes/app_navigator.dart';
 import '../conversation/conversation_logic.dart';
@@ -58,6 +59,7 @@ extension LoginTypeExt on LoginType {
 }
 
 class LoginLogic extends GetxController with GetTickerProviderStateMixin {
+  final appLogic = Get.find<AppController>();
   final imLogic = Get.find<IMController>();
   final phoneCtrl = TextEditingController();
   final pwdCtrl = TextEditingController();
@@ -68,10 +70,20 @@ class LoginLogic extends GetxController with GetTickerProviderStateMixin {
   final isPasswordLogin = true.obs;
   final versionInfo = ''.obs;
   final loginType = LoginType.phone.obs;
-  String? get email => loginType.value == LoginType.email ? phoneCtrl.text.trim() : null;
-  String? get phone => loginType.value == LoginType.phone ? phoneCtrl.text.trim() : null;
-  String? get account => loginType.value == LoginType.account ? phoneCtrl.text.trim() : null;
+  String? get email =>
+      loginType.value == LoginType.email ? phoneCtrl.text.trim() : null;
+  String? get phone =>
+      loginType.value == LoginType.phone ? phoneCtrl.text.trim() : null;
+  String? get account =>
+      loginType.value == LoginType.account ? phoneCtrl.text.trim() : null;
   LoginType operateType = LoginType.phone;
+
+  bool get enableVerificationCodeLogin {
+    final value = appLogic.clientConfigMap['enableVerificationCodeLogin'];
+    if (value == null) return true;
+    return !{'0', 'false', 'no', 'off'}
+        .contains(value.toString().trim().toLowerCase());
+  }
 
   FocusNode? accountFocus = FocusNode();
   FocusNode? pwdFocus = FocusNode();
@@ -119,15 +131,33 @@ class LoginLogic extends GetxController with GetTickerProviderStateMixin {
   @override
   void onReady() {
     super.onReady();
+    _refreshClientConfig();
     getPackageInfo();
+  }
+
+  Future<void> _refreshClientConfig() async {
+    try {
+      await appLogic.queryClientConfig();
+      if (!enableVerificationCodeLogin && !isPasswordLogin.value) {
+        isPasswordLogin.value = true;
+        _onChanged();
+      }
+    } catch (e) {
+      Logger.print('query client config failed: $e');
+    }
   }
 
   _onChanged() {
     if (loginType.value == LoginType.account) {
-      enabled.value = phoneCtrl.text.trim().isNotEmpty && pwdCtrl.text.trim().isNotEmpty;
+      enabled.value =
+          phoneCtrl.text.trim().isNotEmpty && pwdCtrl.text.trim().isNotEmpty;
     } else {
-      enabled.value = isPasswordLogin.value && phoneCtrl.text.trim().isNotEmpty && pwdCtrl.text.trim().isNotEmpty ||
-          !isPasswordLogin.value && phoneCtrl.text.trim().isNotEmpty && verificationCodeCtrl.text.trim().isNotEmpty;
+      enabled.value = isPasswordLogin.value &&
+              phoneCtrl.text.trim().isNotEmpty &&
+              pwdCtrl.text.trim().isNotEmpty ||
+          !isPasswordLogin.value &&
+              phoneCtrl.text.trim().isNotEmpty &&
+              verificationCodeCtrl.text.trim().isNotEmpty;
     }
   }
 
@@ -140,14 +170,22 @@ class LoginLogic extends GetxController with GetTickerProviderStateMixin {
 
         Get.find<CacheController>().resetCache();
         AppNavigator.startMain(conversations: result);
+        await Get.find<AppController>().consumePendingPush();
       }
     });
   }
 
   Future<bool> _login() async {
     try {
+      if (!isPasswordLogin.value && !enableVerificationCodeLogin) {
+        IMViews.showToast(StrRes.verificationCodeLoginDisabled);
+        isPasswordLogin.value = true;
+        _onChanged();
+        return false;
+      }
       if (loginType.value == LoginType.phone) {
-        if (phone?.isNotEmpty == true && !IMUtils.isMobile(areaCode.value, phoneCtrl.text)) {
+        if (phone?.isNotEmpty == true &&
+            !IMUtils.isMobile(areaCode.value, phoneCtrl.text)) {
           IMViews.showToast(StrRes.plsEnterRightPhone);
           return false;
         }
@@ -179,14 +217,17 @@ class LoginLogic extends GetxController with GetTickerProviderStateMixin {
       };
       await DataSp.putLoginCertificate(data);
       await DataSp.putLoginAccount(account);
-      Logger.print('login : ${data.userID}, token: ${data.imToken}');
+      Logger.print('IM login certificate received for user: ${data.userID}');
       await imLogic.login(data.userID, data.imToken);
       Logger.print('im login success');
       PushController.login(
         data.userID,
         onTokenRefresh: (token) {
           OpenIM.iMManager.updateFcmToken(
-              fcmToken: token, expireTime: DateTime.now().add(Duration(days: 90)).millisecondsSinceEpoch);
+              fcmToken: token,
+              expireTime: DateTime.now()
+                  .add(Duration(days: 90))
+                  .millisecondsSinceEpoch);
         },
       );
       Logger.print('push login success');
@@ -198,7 +239,12 @@ class LoginLogic extends GetxController with GetTickerProviderStateMixin {
   }
 
   void togglePasswordType() {
+    if (isPasswordLogin.value && !enableVerificationCodeLogin) {
+      IMViews.showToast(StrRes.verificationCodeLoginDisabled);
+      return;
+    }
     isPasswordLogin.value = !isPasswordLogin.value;
+    _onChanged();
   }
 
   void toggleLoginType() {
@@ -212,7 +258,12 @@ class LoginLogic extends GetxController with GetTickerProviderStateMixin {
   }
 
   Future<bool> getVerificationCode() async {
-    if (phone?.isNotEmpty == true && !IMUtils.isMobile(areaCode.value, phoneCtrl.text)) {
+    if (!enableVerificationCodeLogin) {
+      IMViews.showToast(StrRes.verificationCodeLoginDisabled);
+      return false;
+    }
+    if (phone?.isNotEmpty == true &&
+        !IMUtils.isMobile(areaCode.value, phoneCtrl.text)) {
       IMViews.showToast(StrRes.plsEnterRightPhone);
       return false;
     }
@@ -225,13 +276,20 @@ class LoginLogic extends GetxController with GetTickerProviderStateMixin {
     return sendVerificationCode();
   }
 
-  Future<bool> sendVerificationCode() => LoadingView.singleton.wrap(
+  Future<bool> sendVerificationCode() {
+    if (!enableVerificationCodeLogin) {
+      IMViews.showToast(StrRes.verificationCodeLoginDisabled);
+      return Future.value(false);
+    }
+    return LoadingView.singleton.wrap(
       asyncFunction: () => Apis.requestVerificationCode(
-            areaCode: areaCode.value,
-            phoneNumber: phone,
-            email: email,
-            usedFor: 3,
-          ));
+        areaCode: areaCode.value,
+        phoneNumber: phone,
+        email: email,
+        usedFor: 3,
+      ),
+    );
+  }
 
   void openCountryCodePicker() async {
     String? code = await IMViews.showCountryCodePicker();
@@ -246,8 +304,7 @@ class LoginLogic extends GetxController with GetTickerProviderStateMixin {
     PackageInfo packageInfo = await PackageInfo.fromPlatform();
     final version = packageInfo.version;
     final appName = packageInfo.appName;
-    final buildNumber = packageInfo.buildNumber;
 
-    versionInfo.value = '$appName $version+$buildNumber SDK: ${OpenIM.version}';
+    versionInfo.value = '$appName v$version';
   }
 }

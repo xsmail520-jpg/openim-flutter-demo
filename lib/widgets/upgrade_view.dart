@@ -153,15 +153,16 @@ class _UpgradeViewV2State extends State<UpgradeViewV2> {
                 ),
               if (_showProgress)
                 SizedBox(
-                  height: 44.h,
+                  height: Styles.controlHeight,
                   child: Center(
                     child: LinearPercentIndicator(
                       lineHeight: 20.h,
                       percent: _progress,
-                      center: "${(_progress * 100).toInt()}%".toText..style = TextStyle(fontSize: 12.sp),
+                      center: "${(_progress * 100).toInt()}%".toText
+                        ..style = TextStyle(fontSize: 12.sp),
                       linearStrokeCap: LinearStrokeCap.roundAll,
                       backgroundColor: Colors.grey.withOpacity(0.5),
-                      progressColor: Colors.blueAccent,
+                      progressColor: Styles.primary,
                     ),
                   ),
                 ),
@@ -173,7 +174,7 @@ class _UpgradeViewV2State extends State<UpgradeViewV2> {
   }
 
   Widget _buildButton({required String text, Function()? onTap}) => Ink(
-        height: 44.h,
+        height: Styles.controlHeight,
         child: InkWell(
           onTap: onTap,
           child: Container(
@@ -184,7 +185,7 @@ class _UpgradeViewV2State extends State<UpgradeViewV2> {
             child: Text(
               text,
               style: TextStyle(
-                color: const Color(0xFF1B72EC),
+                color: Styles.primary,
                 fontSize: 16.sp,
               ),
             ),

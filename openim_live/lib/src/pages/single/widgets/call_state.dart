@@ -92,8 +92,8 @@ abstract class SignalState<T extends SignalView> extends State<T> {
     super.dispose();
   }
 
-  Stream<CallEvent> get sameRoomSignalStream =>
-      widget.callEventSubject.stream.where((event) => LiveUtils.isSameRoom(event, roomID));
+  Stream<CallEvent> get sameRoomSignalStream => widget.callEventSubject.stream
+      .where((event) => LiveUtils.isSameRoom(event, roomID));
 
   _onUpdateUserInfo(UserInfo? info) {
     if (!mounted && null != info) return;
@@ -113,15 +113,18 @@ abstract class SignalState<T extends SignalView> extends State<T> {
       callStateSubject.add(event.state);
     }
 
-    if (event.state == CallState.beRejected || event.state == CallState.beCanceled) {
+    if (event.state == CallState.beRejected ||
+        event.state == CallState.beCanceled) {
       widget.onClose?.call();
-    } else if (event.state == CallState.otherReject || event.state == CallState.otherAccepted) {
+    } else if (event.state == CallState.otherReject ||
+        event.state == CallState.otherAccepted) {
       if (existParticipants()) {
         return;
       }
       widget.onClose?.call();
-      IMViews.showToast(
-          sprintf(StrRes.otherCallHandle, [event.state == CallState.otherReject ? StrRes.rejectCall : StrRes.accept]));
+      IMViews.showToast(sprintf(StrRes.otherCallHandle, [
+        event.state == CallState.otherReject ? StrRes.rejectCall : StrRes.accept
+      ]));
     } else if (event.state == CallState.timeout) {
       widget.onClose?.call();
     } else if (event.state == CallState.beAccepted) {
@@ -234,7 +237,7 @@ abstract class SignalState<T extends SignalView> extends State<T> {
             duration: const Duration(milliseconds: 200),
             onEnd: () {},
             child: Container(
-              color: Styles.c_000000,
+              color: Styles.ink,
               child: Stack(
                 children: [
                   // ImageRes.liveBg.toImage
@@ -242,7 +245,9 @@ abstract class SignalState<T extends SignalView> extends State<T> {
                   //   ..width = 1.sw
                   //   ..height = 1.sh,
                   if (null != remoteParticipantTrack)
-                    ParticipantWidget.widgetFor(smallScreenIsRemote ? remoteParticipantTrack! : localParticipantTrack!),
+                    ParticipantWidget.widgetFor(smallScreenIsRemote
+                        ? remoteParticipantTrack!
+                        : localParticipantTrack!),
 
                   if (null != localParticipantTrack)
                     Positioned(
@@ -252,8 +257,9 @@ abstract class SignalState<T extends SignalView> extends State<T> {
                         child: SizedBox(
                           width: 120.w,
                           height: 180.h,
-                          child: ParticipantWidget.widgetFor(
-                              smallScreenIsRemote ? localParticipantTrack! : remoteParticipantTrack!),
+                          child: ParticipantWidget.widgetFor(smallScreenIsRemote
+                              ? localParticipantTrack!
+                              : remoteParticipantTrack!),
                         ),
                         onTap: () {
                           if (remoteParticipantTrack != null) {

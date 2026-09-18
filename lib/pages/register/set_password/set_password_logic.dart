@@ -42,8 +42,9 @@ class SetPasswordLogic extends GetxController {
   }
 
   _onChanged() {
-    enabled.value =
-        nicknameCtrl.text.trim().isNotEmpty && pwdCtrl.text.trim().isNotEmpty && pwdAgainCtrl.text.trim().isNotEmpty;
+    enabled.value = nicknameCtrl.text.trim().isNotEmpty &&
+        pwdCtrl.text.trim().isNotEmpty &&
+        pwdAgainCtrl.text.trim().isNotEmpty;
   }
 
   bool _checkingInput() {
@@ -80,11 +81,16 @@ class SetPasswordLogic extends GetxController {
         verificationCode: verificationCode,
         invitationCode: invitationCode,
       );
-      if (null == IMUtils.emptyStrToNull(data.imToken) || null == IMUtils.emptyStrToNull(data.chatToken)) {
+      if (null == IMUtils.emptyStrToNull(data.imToken) ||
+          null == IMUtils.emptyStrToNull(data.chatToken)) {
         AppNavigator.startLogin();
         return;
       }
-      final account = {"areaCode": areaCode, "phoneNumber": phoneNumber, 'email': email};
+      final account = {
+        "areaCode": areaCode,
+        "phoneNumber": phoneNumber,
+        'email': email
+      };
       await DataSp.putLoginCertificate(data);
       await DataSp.putLoginAccount(account);
       DataSp.putLoginType(email != null ? 1 : 0);

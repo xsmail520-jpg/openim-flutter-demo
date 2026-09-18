@@ -7,7 +7,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../user_profile _panel_logic.dart';
 
 class PersonalInfoLogic extends GetxController {
-  final userProfilesLogic = Get.find<UserProfilePanelLogic>(tag: GetTags.userProfile);
+  final userProfilesLogic =
+      Get.find<UserProfilePanelLogic>(tag: GetTags.userProfile);
   late String userID;
   final userFullInfo = UserFullInfo().obs;
 
@@ -37,6 +38,7 @@ class PersonalInfoLogic extends GetxController {
         val?.email = existUser.email;
         val?.gender = existUser.gender;
         val?.mobile = existUser.mobile;
+        val?.ex = existUser.ex;
       });
     }
 
@@ -56,27 +58,44 @@ class PersonalInfoLogic extends GetxController {
         val?.telephone = info.telephone;
         val?.phoneNumber = info.phoneNumber;
         val?.email = info.email;
+        val?.ex = info.ex;
       });
     }
   }
 
-  String? get nickname => IMUtils.emptyStrToNull(userProfilesLogic.userInfo.value.nickname) ?? IMUtils.emptyStrToNull(userFullInfo.value.nickname);
+  String? get nickname =>
+      IMUtils.emptyStrToNull(userProfilesLogic.userInfo.value.nickname) ??
+      IMUtils.emptyStrToNull(userFullInfo.value.nickname);
 
-  String? get faceURL => IMUtils.emptyStrToNull(userProfilesLogic.userInfo.value.faceURL) ?? IMUtils.emptyStrToNull(userFullInfo.value.faceURL);
+  String? get faceURL =>
+      IMUtils.emptyStrToNull(userProfilesLogic.userInfo.value.faceURL) ??
+      IMUtils.emptyStrToNull(userFullInfo.value.faceURL);
 
-  bool get isMale => (userProfilesLogic.userInfo.value.gender ?? userFullInfo.value.gender) == 1;
+  bool get isMale =>
+      (userProfilesLogic.userInfo.value.gender ?? userFullInfo.value.gender) ==
+      1;
 
-  String? get englishName => IMUtils.emptyStrToNull(userFullInfo.value.englishName) ?? '-';
+  String? get englishName =>
+      IMUtils.emptyStrToNull(userFullInfo.value.englishName) ?? '-';
 
-  int? get _birth => userProfilesLogic.userInfo.value.birth ?? userFullInfo.value.birth;
+  int? get _birth =>
+      userProfilesLogic.userInfo.value.birth ?? userFullInfo.value.birth;
 
-  String? get birth => _birth == null ? '-' : DateUtil.formatDateMs(_birth!, format: IMUtils.getTimeFormat1());
+  String? get birth => _birth == null
+      ? '-'
+      : DateUtil.formatDateMs(_birth!, format: IMUtils.getTimeFormat1());
 
-  String? get telephone => IMUtils.emptyStrToNull(userFullInfo.value.telephone) ?? '-';
+  String? get telephone =>
+      IMUtils.emptyStrToNull(userFullInfo.value.telephone) ?? '-';
 
-  String? get phoneNumber => IMUtils.emptyStrToNull(userFullInfo.value.phoneNumber) ?? '-';
+  String? get phoneNumber =>
+      IMUtils.emptyStrToNull(userFullInfo.value.phoneNumber) ?? '-';
 
   String? get email => IMUtils.emptyStrToNull(userFullInfo.value.email) ?? '-';
+
+  String? get personalIntro =>
+      IMUtils.emptyStrToNull(userProfilesLogic.userInfo.value.ex) ??
+      IMUtils.emptyStrToNull(userFullInfo.value.ex);
 
   clickPhoneNumber() => _callSystemPhone(userFullInfo.value.phoneNumber);
 

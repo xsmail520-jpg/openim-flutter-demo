@@ -16,9 +16,8 @@ class ResetPasswordPage extends StatelessWidget {
         child: Obx(() => Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                StrRes.forgetPassword.toText
-                  ..style = Styles.ts_0089FF_22sp_semibold,
-                29.verticalSpace,
+                RegisterPageTitle(StrRes.forgetPassword),
+                28.verticalSpace,
                 InputBox.password(
                   label: StrRes.password,
                   hintText: StrRes.plsEnterPassword,
@@ -33,7 +32,7 @@ class ResetPasswordPage extends StatelessWidget {
                   controller: logic.pwdAgainCtrl,
                   inputFormatters: [IMUtils.getPasswordFormatter()],
                 ),
-                129.verticalSpace,
+                40.verticalSpace,
                 Button(
                   text: StrRes.confirmTheChanges,
                   enabled: logic.enabled.value,

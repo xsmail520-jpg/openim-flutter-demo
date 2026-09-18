@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:get/get.dart';
 import 'package:openim_common/openim_common.dart';
 
 class BottomSheetView extends StatelessWidget {
@@ -24,26 +23,46 @@ class BottomSheetView extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 10.w),
+        padding: EdgeInsets.symmetric(horizontal: 8.w),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.end,
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(6.r),
+                color: Styles.surface,
+                borderRadius: BorderRadius.circular(Styles.radiusMedium.r),
+                border: Border.all(
+                  color: Styles.divider,
+                  width: Styles.dividerWidth,
+                ),
               ),
+              clipBehavior: Clip.antiAlias,
               child: Column(
                 mainAxisSize: MainAxisSize.min,
-                children: items.map(_parseItem).toList(),
+                children:
+                    items.map((item) => _parseItem(context, item)).toList(),
               ),
             ),
             10.verticalSpace,
-            _itemBgView(
-              label: StrRes.cancel,
-              onTap: isOverlaySheet ? onCancel : () => Get.back(),
-              borderRadius: BorderRadius.circular(6.r),
-              alignment: MainAxisAlignment.center,
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(Styles.radiusMedium.r),
+                border: Border.all(
+                  color: Styles.divider,
+                  width: Styles.dividerWidth,
+                ),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: _itemBgView(
+                label: StrRes.cancel,
+                textStyle: Styles.ts_0C1C33_17sp_semibold,
+                onTap: isOverlaySheet
+                    ? onCancel
+                    : () => Navigator.of(context).pop(),
+                borderRadius: BorderRadius.circular(Styles.radiusMedium.r),
+                alignment: MainAxisAlignment.center,
+              ),
             ),
             10.verticalSpace,
           ],
@@ -52,20 +71,25 @@ class BottomSheetView extends StatelessWidget {
     );
   }
 
-  Widget _parseItem(SheetItem item) {
+  Widget _parseItem(BuildContext context, SheetItem item) {
     BorderRadius? borderRadius;
     int length = items.length;
     bool isLast = items.indexOf(item) == items.length - 1;
     bool isFirst = items.indexOf(item) == 0;
     if (length == 1) {
-      borderRadius = item.borderRadius ?? BorderRadius.circular(6.r);
+      borderRadius =
+          item.borderRadius ?? BorderRadius.circular(Styles.radiusMedium.r);
     } else {
       borderRadius = item.borderRadius ??
           BorderRadius.only(
-            topLeft: isFirst ? Radius.circular(6.r) : Radius.zero,
-            topRight: isFirst ? Radius.circular(6.r) : Radius.zero,
-            bottomLeft: isLast ? Radius.circular(6.r) : Radius.zero,
-            bottomRight: isLast ? Radius.circular(6.r) : Radius.zero,
+            topLeft:
+                isFirst ? Radius.circular(Styles.radiusMedium.r) : Radius.zero,
+            topRight:
+                isFirst ? Radius.circular(Styles.radiusMedium.r) : Radius.zero,
+            bottomLeft:
+                isLast ? Radius.circular(Styles.radiusMedium.r) : Radius.zero,
+            bottomRight:
+                isLast ? Radius.circular(Styles.radiusMedium.r) : Radius.zero,
           );
     }
     return _itemBgView(
@@ -76,7 +100,12 @@ class BottomSheetView extends StatelessWidget {
         line: !isLast,
         borderRadius: borderRadius,
         onTap: () {
-          if (!isOverlaySheet) Get.back(result: item.result);
+          if (!isOverlaySheet) {
+            // Pop the sheet's own route. Get.back() can pop the underlying
+            // chat route when this sheet is opened above a regular Navigator
+            // route such as the media preview.
+            Navigator.of(context).pop(item.result);
+          }
           item.onTap?.call();
         });
   }
@@ -101,11 +130,14 @@ class BottomSheetView extends StatelessWidget {
             decoration: line
                 ? BoxDecoration(
                     border: BorderDirectional(
-                      bottom: BorderSide(color: Styles.c_E8EAEF, width: 0.5),
+                      bottom: const BorderSide(
+                        color: Styles.divider,
+                        width: Styles.dividerWidth,
+                      ),
                     ),
                   )
                 : null,
-            height: itemHeight ?? 56.h,
+            height: itemHeight ?? 52.h,
             child: Row(
               mainAxisAlignment:
                   alignment ?? mainAxisAlignment ?? MainAxisAlignment.center,

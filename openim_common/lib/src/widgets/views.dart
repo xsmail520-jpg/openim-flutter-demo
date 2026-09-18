@@ -112,7 +112,8 @@ class IMViews {
       List<SheetItem> items = const [],
       int quality = 80}) {
     bool allowSendImageTypeHelper(String? mimeType) {
-      final result = mimeType?.contains('png') == true || mimeType?.contains('jpeg') == true;
+      final result = mimeType?.contains('png') == true ||
+          mimeType?.contains('jpeg') == true;
 
       return result;
     }
@@ -131,23 +132,25 @@ class IMViews {
             SheetItem(
               label: StrRes.toolboxAlbum,
               onTap: () async {
-                final List<AssetEntity>? assets = await AssetPicker.pickAssets(Get.context!,
-                    pickerConfig: AssetPickerConfig(
-                        requestType: RequestType.image,
-                        maxAssets: 1,
-                        selectPredicate: (_, entity, isSelected) async {
-                          if (await allowSendImageType(entity)) {
-                            return true;
-                          }
+                final List<AssetEntity>? assets =
+                    await AssetPicker.pickAssets(Get.context!,
+                        pickerConfig: AssetPickerConfig(
+                            requestType: RequestType.image,
+                            maxAssets: 1,
+                            selectPredicate: (_, entity, isSelected) async {
+                              if (await allowSendImageType(entity)) {
+                                return true;
+                              }
 
-                          IMViews.showToast(StrRes.supportsTypeHint);
+                              IMViews.showToast(StrRes.supportsTypeHint);
 
-                          return false;
-                        }));
+                              return false;
+                            }));
                 final file = await assets?.firstOrNull?.file;
 
                 if (file?.path != null) {
-                  final map = await uCropPic(file!.path, crop: crop, toUrl: toUrl, quality: quality);
+                  final map = await uCropPic(file!.path,
+                      crop: crop, toUrl: toUrl, quality: quality);
                   onData?.call(map['path'], map['url']);
                 }
               },
@@ -173,7 +176,8 @@ class IMViews {
                 final file = await entity?.file;
 
                 if (file?.path != null) {
-                  final map = await uCropPic(file!.path, crop: crop, toUrl: toUrl, quality: quality);
+                  final map = await uCropPic(file!.path,
+                      crop: crop, toUrl: toUrl, quality: quality);
                   onData?.call(map['path'], map['url']);
                 }
               },
@@ -203,7 +207,9 @@ class IMViews {
       if (null != cropFile) {
         Logger.print('-----------crop path: ${cropFile.path}');
         result = await LoadingView.singleton.wrap(asyncFunction: () async {
-          final image = await IMUtils.compressImageAndGetFile(File(cropFile!.path), quality: quality);
+          final image = await IMUtils.compressImageAndGetFile(
+              File(cropFile!.path),
+              quality: quality);
 
           return OpenIM.iMManager.uploadFile(
             id: putID,
@@ -214,7 +220,8 @@ class IMViews {
       } else {
         Logger.print('-----------source path: $path');
         result = await LoadingView.singleton.wrap(asyncFunction: () async {
-          final image = await IMUtils.compressImageAndGetFile(File(path), quality: quality);
+          final image = await IMUtils.compressImageAndGetFile(File(path),
+              quality: quality);
 
           return OpenIM.iMManager.uploadFile(
             id: putID,
@@ -307,20 +314,18 @@ class IMViews {
       showPhoneCode: true,
       countryListTheme: CountryListThemeData(
         flagSize: 25,
-        backgroundColor: Colors.white,
-        textStyle: TextStyle(fontSize: 16.sp, color: Colors.blueGrey),
+        backgroundColor: Styles.surface,
+        textStyle: TextStyle(fontSize: 16.sp, color: Styles.ink),
         bottomSheetHeight: 500.h,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(8.0.r),
-          topRight: Radius.circular(8.0.r),
+          topLeft: Radius.circular(Styles.radiusMedium.r),
+          topRight: Radius.circular(Styles.radiusMedium.r),
         ),
         inputDecoration: InputDecoration(
           labelText: StrRes.search,
-          prefixIcon: const Icon(Icons.search),
+          prefixIcon: const Icon(Icons.search, color: Styles.muted),
           border: OutlineInputBorder(
-            borderSide: BorderSide(
-              color: const Color(0xFF8C98A8).withOpacity(0.2),
-            ),
+            borderSide: const BorderSide(color: Styles.divider),
           ),
         ),
       ),

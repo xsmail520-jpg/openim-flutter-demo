@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_openim_sdk/flutter_openim_sdk.dart';
 import 'package:get/get.dart';
@@ -46,13 +47,16 @@ class ConversationLogic extends GetxController {
         }
       }
 
-      Logger.print('IM SDK Status: $status, reinstall: $reInstall, progress: $progress');
+      Logger.print(
+          'IM SDK Status: $status, reinstall: $reInstall, progress: $progress');
 
       if (status == IMSdkStatus.syncProgress && reInstall) {
         final p = (progress!).toDouble() / 100.0;
 
-        EasyLoading.showProgress(p, status: '${StrRes.synchronizing}(${(p * 100.0).truncate()}%)');
-      } else if (status == IMSdkStatus.syncEnded || status == IMSdkStatus.syncFailed) {
+        EasyLoading.showProgress(p,
+            status: '${StrRes.synchronizing}(${(p * 100.0).truncate()}%)');
+      } else if (status == IMSdkStatus.syncEnded ||
+          status == IMSdkStatus.syncFailed) {
         EasyLoading.dismiss();
         if (reInstall) {
           onRefresh();
@@ -75,7 +79,8 @@ class ConversationLogic extends GetxController {
       onChangeConversations.addAll(newList);
     }
     for (var newValue in newList) {
-      Logger.print('======== conversation changed: ${newValue.toJson()} ========');
+      Logger.print(
+          '======== conversation changed: ${newValue.toJson()} ========');
       list.removeWhere((e) => e.conversationID == newValue.conversationID);
     }
 
@@ -136,7 +141,8 @@ class ConversationLogic extends GetxController {
 
       final text = IMUtils.parseNtf(info.latestMsg!, isConversation: true);
       if (text != null) return text;
-      if (info.isSingleChat || info.latestMsg!.sendID == OpenIM.iMManager.userID)
+      if (info.isSingleChat ||
+          info.latestMsg!.sendID == OpenIM.iMManager.userID)
         return IMUtils.parseMsg(info.latestMsg!, isConversation: true);
 
       return "${info.latestMsg!.senderNickname}: ${IMUtils.parseMsg(info.latestMsg!, isConversation: true)} ";
@@ -194,9 +200,11 @@ class ConversationLogic extends GetxController {
   }
 
   bool get isFailedSdkStatus =>
-      imStatus.value == IMSdkStatus.connectionFailed || imStatus.value == IMSdkStatus.syncFailed;
+      imStatus.value == IMSdkStatus.connectionFailed ||
+      imStatus.value == IMSdkStatus.syncFailed;
 
-  void _sortConversationList() => OpenIM.iMManager.conversationManager.simpleSort(list);
+  void _sortConversationList() =>
+      OpenIM.iMManager.conversationManager.simpleSort(list);
 
   void onRefresh() async {
     late List<ConversationInfo> list;
@@ -215,7 +223,8 @@ class ConversationLogic extends GetxController {
   }
 
   static Future<List<ConversationInfo>> getConversationFirstPage() async {
-    final result = await OpenIM.iMManager.conversationManager.getConversationListSplit(offset: 0, count: 400);
+    final result = await OpenIM.iMManager.conversationManager
+        .getConversationListSplit(offset: 0, count: 400);
 
     return result;
   }
@@ -235,20 +244,23 @@ class ConversationLogic extends GetxController {
     final temp = <ConversationInfo>[];
 
     while (true) {
-      var result = await OpenIM.iMManager.conversationManager.getConversationListSplit(
+      var result =
+          await OpenIM.iMManager.conversationManager.getConversationListSplit(
         offset: temp.length,
         count: pageSize,
       );
       if (onChangeConversations.isNotEmpty) {
         final bSet = Set.from(onChangeConversations);
 
-        Logger.print('replace conversation: [${onChangeConversations.length}], $bSet');
+        Logger.print(
+            'replace conversation: [${onChangeConversations.length}], $bSet');
 
         for (int i = 0; i < result.length; i++) {
           final info = result[i];
 
           if (bSet.contains(info)) {
-            result[i] = onChangeConversations[onChangeConversations.indexOf(info)];
+            result[i] =
+                onChangeConversations[onChangeConversations.indexOf(info)];
           }
         }
       }
@@ -272,7 +284,8 @@ class ConversationLogic extends GetxController {
     required int sessionType,
   }) =>
       LoadingView.singleton.wrap(
-          asyncFunction: () => OpenIM.iMManager.conversationManager.getOneConversation(
+          asyncFunction: () =>
+              OpenIM.iMManager.conversationManager.getOneConversation(
                 sourceID: sourceID,
                 sessionType: sessionType,
               ));
@@ -318,11 +331,65 @@ class ConversationLogic extends GetxController {
     }
   }
 
-  addFriend() => AppNavigator.startAddContactsBySearch(searchType: SearchType.user);
+  addFriend() =>
+      AppNavigator.startAddContactsBySearch(searchType: SearchType.user);
 
-  createGroup() => AppNavigator.startCreateGroup(defaultCheckedList: [OpenIM.iMManager.userInfo]);
+  createGroup() => AppNavigator.startCreateGroup(
+      defaultCheckedList: [OpenIM.iMManager.userInfo]);
 
-  addGroup() => AppNavigator.startAddContactsBySearch(searchType: SearchType.group);
+  addGroup() =>
+      AppNavigator.startAddContactsBySearch(searchType: SearchType.group);
 
   void globalSearch() => AppNavigator.startGlobalSearch();
+
+  Future<void> showConversationActions(ConversationInfo info) async {
+    final action = await Get.bottomSheet<String>(
+      SafeArea(
+        child: Material(
+          color: Styles.surface,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: Icon(info.isPinned == true
+                    ? Icons.push_pin_outlined
+                    : Icons.push_pin),
+                title: Text(info.isPinned == true ? '取消置顶' : '置顶会话'),
+                onTap: () => Get.back(result: 'pin'),
+              ),
+              if (info.unreadCount > 0)
+                ListTile(
+                  leading: const Icon(Icons.mark_chat_read_outlined),
+                  title: const Text('标记为已读'),
+                  onTap: () => Get.back(result: 'read'),
+                ),
+              ListTile(
+                leading: const Icon(Icons.close),
+                title: const Text('取消'),
+                onTap: () => Get.back(),
+              ),
+            ],
+          ),
+        ),
+      ),
+      isScrollControlled: true,
+    );
+    try {
+      if (action == 'pin') {
+        await OpenIM.iMManager.conversationManager.pinConversation(
+          conversationID: info.conversationID,
+          isPinned: info.isPinned != true,
+        );
+        onRefresh();
+      } else if (action == 'read') {
+        await OpenIM.iMManager.conversationManager
+            .markConversationMessageAsRead(
+          conversationID: info.conversationID,
+        );
+        onRefresh();
+      }
+    } catch (e) {
+      IMViews.showToast('会话操作失败：$e');
+    }
+  }
 }

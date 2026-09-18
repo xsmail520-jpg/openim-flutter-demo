@@ -45,7 +45,8 @@ class ChatInputBox extends StatefulWidget {
   State<ChatInputBox> createState() => _ChatInputBoxState();
 }
 
-class _ChatInputBoxState extends State<ChatInputBox> /*with TickerProviderStateMixin */ {
+class _ChatInputBoxState
+    extends State<ChatInputBox> /*with TickerProviderStateMixin */ {
   bool _toolsVisible = false;
   bool _leftKeyboardButton = false;
   bool _sendButtonVisible = false;
@@ -97,10 +98,18 @@ class _ChatInputBoxState extends State<ChatInputBox> /*with TickerProviderStateM
             children: [
               Container(
                 constraints: BoxConstraints(minHeight: kInputBoxMinHeight),
-                color: Styles.c_F0F2F6,
+                decoration: const BoxDecoration(
+                  color: Styles.surface,
+                  border: Border(
+                    top: BorderSide(
+                      color: Styles.divider,
+                      width: Styles.dividerWidth,
+                    ),
+                  ),
+                ),
                 child: Row(
                   children: [
-                    12.horizontalSpace,
+                    10.horizontalSpace,
                     Expanded(
                       child: Stack(
                         children: [
@@ -115,13 +124,9 @@ class _ChatInputBoxState extends State<ChatInputBox> /*with TickerProviderStateM
                         ],
                       ),
                     ),
-                    12.horizontalSpace,
-                    (_sendButtonVisible ? ImageRes.sendMessage : ImageRes.openToolbox).toImage
-                      ..width = 32.w
-                      ..height = 32.h
-                      ..opacity = _opacity
-                      ..onTap = _sendButtonVisible ? send : toggleToolbox,
-                    12.horizontalSpace,
+                    8.horizontalSpace,
+                    _buildTrailingAction(),
+                    10.horizontalSpace,
                   ],
                 ),
               ),
@@ -144,10 +149,14 @@ class _ChatInputBoxState extends State<ChatInputBox> /*with TickerProviderStateM
   }
 
   Widget get _textFiled => Container(
-        margin: EdgeInsets.only(top: 10.h, bottom: _showQuoteView ? 4.h : 10.h),
+        margin: EdgeInsets.only(top: 8.h, bottom: _showQuoteView ? 4.h : 8.h),
         decoration: BoxDecoration(
-          color: Styles.c_FFFFFF,
-          borderRadius: BorderRadius.circular(4.r),
+          color: Styles.primarySoft,
+          border: Border.all(
+            color: Styles.divider,
+            width: Styles.dividerWidth,
+          ),
+          borderRadius: BorderRadius.circular(9.r),
         ),
         child: ChatTextField(
           controller: widget.controller,
@@ -157,6 +166,43 @@ class _ChatInputBoxState extends State<ChatInputBox> /*with TickerProviderStateM
           enabled: widget.enabled,
           hintText: widget.hintText,
           textAlign: widget.enabled ? TextAlign.start : TextAlign.center,
+        ),
+      );
+
+  Widget _buildTrailingAction() => Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: _sendButtonVisible ? send : toggleToolbox,
+          borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            curve: Curves.easeOutCubic,
+            width: (_sendButtonVisible ? 54 : Styles.controlHeight).w,
+            height: 38.h,
+            decoration: BoxDecoration(
+              color: _sendButtonVisible ? Styles.primary : Styles.surface,
+              border: Border.all(
+                color: _sendButtonVisible ? Styles.primary : Styles.divider,
+              ),
+              borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
+            ),
+            child: Center(
+              child: _sendButtonVisible
+                  ? Text(
+                      StrRes.send,
+                      style: Styles.ts_FFFFFF_14sp_medium,
+                    )
+                  : ColorFiltered(
+                      colorFilter: ColorFilter.mode(
+                        Styles.primary.withValues(alpha: _opacity),
+                        BlendMode.srcIn,
+                      ),
+                      child: ImageRes.openToolbox.toImage
+                        ..width = 24.w
+                        ..height = 24.h,
+                    ),
+            ),
+          ),
         ),
       );
 
@@ -208,7 +254,8 @@ class _SubView extends StatelessWidget {
     this.title,
     this.content,
     this.textSpan,
-  }) : assert(content != null || textSpan != null, 'Either content or textSpan must be provided.');
+  }) : assert(content != null || textSpan != null,
+            'Either content or textSpan must be provided.');
   final VoidCallback? onClose;
   final String? title;
   final String? content;
@@ -217,16 +264,23 @@ class _SubView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.only(bottom: 10.h, left: 56.w, right: 100.w),
-      color: Styles.c_F0F2F6,
+      padding: EdgeInsets.only(bottom: 8.h, left: 12.w, right: 12.w),
+      color: Styles.surface,
       child: GestureDetector(
         behavior: HitTestBehavior.translucent,
         onTap: onClose,
         child: Container(
-          padding: EdgeInsets.symmetric(vertical: 1.h, horizontal: 4.w),
+          constraints: const BoxConstraints(
+            minHeight: Styles.controlHeight,
+          ),
+          padding: EdgeInsets.only(left: 10.w),
           decoration: BoxDecoration(
-            color: Styles.c_FFFFFF,
-            borderRadius: BorderRadius.circular(4.r),
+            color: Styles.surface,
+            border: Border.all(
+              color: Styles.divider,
+              width: Styles.dividerWidth,
+            ),
+            borderRadius: BorderRadius.circular(Styles.radiusSmall.r),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -243,7 +297,7 @@ class _SubView extends StatelessWidget {
                       ),
                     if (content != null)
                       Text(
-                        title!,
+                        content!,
                         style: Styles.ts_8E9AB0_14sp,
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
@@ -259,9 +313,15 @@ class _SubView extends StatelessWidget {
                   ],
                 ),
               ),
-              ImageRes.delQuote.toImage
-                ..width = 14.w
-                ..height = 14.h,
+              SizedBox(
+                width: Styles.controlHeight,
+                height: Styles.controlHeight,
+                child: Center(
+                  child: ImageRes.delQuote.toImage
+                    ..width = 14.w
+                    ..height = 14.h,
+                ),
+              ),
             ],
           ),
         ),

@@ -44,19 +44,20 @@ class GroupSetupLogic extends GetxController {
     if (Get.arguments['conversationInfo'] != null) {
       conversationInfo = Rx(Get.arguments['conversationInfo']);
     } else {
-      final temp = await OpenIM.iMManager.conversationManager.getOneConversation(
-          sourceID: chatLogic.conversationInfo.isGroupChat
-              ? chatLogic.conversationInfo.groupID!
-              : chatLogic.conversationInfo.userID!,
-          sessionType: chatLogic.conversationInfo.conversationType!);
+      final temp = await OpenIM.iMManager.conversationManager
+          .getOneConversation(
+              sourceID: chatLogic.conversationInfo.isGroupChat
+                  ? chatLogic.conversationInfo.groupID!
+                  : chatLogic.conversationInfo.userID!,
+              sessionType: chatLogic.conversationInfo.conversationType!);
       conversationInfo = Rx(temp);
     }
     groupInfo = Rx(_defaultGroupInfo);
     myGroupMembersInfo = Rx(_defaultMemberInfo);
 
     _ccSub = imLogic.conversationChangedSubject.listen((newList) {
-      final newValue =
-          newList.firstWhereOrNull((element) => element.conversationID == conversationInfo.value.conversationID);
+      final newValue = newList.firstWhereOrNull((element) =>
+          element.conversationID == conversationInfo.value.conversationID);
       if (newValue != null) {
         conversationInfo.update((val) {
           val?.isPinned = newValue.isPinned;
@@ -88,14 +89,17 @@ class GroupSetupLogic extends GetxController {
     });
 
     _mISub = imLogic.memberInfoChangedSubject.listen((e) {
-      if (e.groupID == groupInfo.value.groupID && e.userID == myGroupMembersInfo.value.userID) {
+      if (e.groupID == groupInfo.value.groupID &&
+          e.userID == myGroupMembersInfo.value.userID) {
         myGroupMembersInfo.update((val) {
           val?.nickname = e.nickname;
           val?.roleLevel = e.roleLevel;
         });
       }
-      if (e.groupID == groupInfo.value.groupID && e.userID == groupInfo.value.ownerUserID) {
-        var index = memberList.indexWhere((element) => element.userID == groupInfo.value.ownerUserID);
+      if (e.groupID == groupInfo.value.groupID &&
+          e.userID == groupInfo.value.ownerUserID) {
+        var index = memberList.indexWhere(
+            (element) => element.userID == groupInfo.value.ownerUserID);
         if (index == -1) {
           memberList.insert(0, e);
         } else if (index != 0) {
@@ -164,7 +168,8 @@ class GroupSetupLogic extends GetxController {
 
   bool get isOwnerOrAdmin => isOwner || isAdmin;
 
-  bool get isAdmin => myGroupMembersInfo.value.roleLevel == GroupRoleLevel.admin;
+  bool get isAdmin =>
+      myGroupMembersInfo.value.roleLevel == GroupRoleLevel.admin;
 
   bool get isNotDisturb => conversationInfo.value.recvMsgOpt != 0;
 
@@ -241,7 +246,8 @@ class GroupSetupLogic extends GetxController {
   void modifyGroupAvatar() async {
     final List<AssetEntity>? assets = await AssetPicker.pickAssets(
       Get.context!,
-      pickerConfig: const AssetPickerConfig(maxAssets: 1, requestType: RequestType.image),
+      pickerConfig:
+          const AssetPickerConfig(maxAssets: 1, requestType: RequestType.image),
     );
     if (assets != null) {
       final file = await assets.first.file;
@@ -263,6 +269,10 @@ class GroupSetupLogic extends GetxController {
   void modifyGroupName(String? faceUrl) => AppNavigator.startEditGroupName(
         type: EditNameType.groupNickname,
         faceUrl: faceUrl,
+      );
+
+  void editGroupAnnouncement() => AppNavigator.startEditGroupName(
+        type: EditNameType.groupAnnouncement,
       );
 
   _modifyGroupInfo({
@@ -289,8 +299,22 @@ class GroupSetupLogic extends GetxController {
         groupInfo: groupInfo.value,
       );
 
+  Future<void> setNotDisturb(bool enabled) async {
+    final status = enabled ? 1 : 0;
+    try {
+      await OpenIM.iMManager.conversationManager.setConversationRecvMessageOpt(
+        conversationID: conversationID,
+        status: status,
+      );
+      conversationInfo.update((info) => info?.recvMsgOpt = status);
+    } catch (_) {
+      IMViews.showToast(StrRes.settingsUpdateFailed);
+    }
+  }
+
   void _removeConversation() async {
-    await OpenIM.iMManager.conversationManager.deleteConversationAndDeleteAllMsg(
+    await OpenIM.iMManager.conversationManager
+        .deleteConversationAndDeleteAllMsg(
       conversationID: conversationInfo.value.conversationID,
     );
   }
@@ -333,7 +357,9 @@ class GroupSetupLogic extends GetxController {
 
   int length() {
     int buttons = isOwnerOrAdmin ? 2 : 1;
-    return (memberList.length + buttons) > 10 ? 10 : (memberList.length + buttons);
+    return (memberList.length + buttons) > 10
+        ? 10
+        : (memberList.length + buttons);
   }
 
   Widget itemBuilder({
@@ -405,7 +431,8 @@ class GroupSetupLogic extends GetxController {
     }
   }
 
-  void viewMemberInfo(GroupMembersInfo membersInfo) => AppNavigator.startUserProfilePane(
+  void viewMemberInfo(GroupMembersInfo membersInfo) =>
+      AppNavigator.startUserProfilePane(
         userID: membersInfo.userID!,
         nickname: membersInfo.nickname,
         faceURL: membersInfo.faceURL,
